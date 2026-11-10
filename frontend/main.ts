@@ -9,6 +9,8 @@ interface Item { id: number; nome: string; unidade: string; meta: number }
 interface Campanha { id: number; titulo: string; descricao: string; itens: Item[] }
 interface CampanhaPainel { id: number; titulo: string; descricao: string; publicada: boolean; encerrada: boolean; itens: Item[] }
 interface Catalogo { instituicao: string; campanhas: Campanha[] }
+interface Responsavel { id: number; nome: string; contato: string }
+interface InstAdmin { id: number; nome: string; hostname: string | null; contato: string | null; aprovada: boolean; responsaveis: Responsavel[] }
 
 @Component({
   selector: 'elo-app',
@@ -87,6 +89,46 @@ interface Catalogo { instituicao: string; campanhas: Campanha[] }
           }
         </section>
       } @else { <p role="status">{{ mensagem() }}</p> }
+      <details><summary>Cadastrar minha instituição</summary>
+        <form #cad (submit)="$event.preventDefault(); cadastrar(cad)">
+          <label>Nome da instituição <input name="nome" required maxlength="160"></label>
+          <label>Contato da instituição <input name="contato" maxlength="255"></label>
+          <label>Seu nome <input name="resp_nome" required maxlength="160"></label>
+          <label>Seu contato <input name="resp_contato" required maxlength="255"></label>
+          <button [disabled]="ocupado()">Enviar cadastro</button>
+        </form>
+      </details>
+      <details><summary>Administração</summary>
+        @if (instituicoes(); as insts) {
+          <button [disabled]="ocupado()" (click)="sairAdmin()">Sair da administração</button>
+          @if (codigoGerado(); as codigo) {
+            <p role="status">Código gerado (copie agora, aparece só uma vez): {{ codigo }}</p>
+          }
+          @for (i of insts; track i.id) {
+            <article>
+              <h3>{{ i.nome }}</h3>
+              <p>{{ i.aprovada ? ('Aprovada · ' + i.hostname) : 'Pendente' }}</p>
+              @if (i.contato) { <p>Contato: {{ i.contato }}</p> }
+              <ul>@for (r of i.responsaveis; track r.id) {
+                <li>{{ r.nome }} · {{ r.contato }}</li>
+              }</ul>
+              @if (i.aprovada) {
+                <button [disabled]="ocupado()" (click)="regerar(i.id)">Gerar novo código</button>
+              } @else {
+                <form #ap (submit)="$event.preventDefault(); aprovar(i.id, ap)">
+                  <label>Domínio <input name="hostname" required maxlength="253" placeholder="nome.elo.vnbueno.com.br"></label>
+                  <button [disabled]="ocupado()">Aprovar e gerar código</button>
+                </form>
+              }
+            </article>
+          } @empty { <p>Nenhuma instituição.</p> }
+        } @else {
+          <form #adm (submit)="$event.preventDefault(); entrarAdmin(adm)">
+            <label>Chave de administrador <input name="codigo" type="password" required autocomplete="current-password"></label>
+            <button [disabled]="ocupado()">Entrar</button>
+          </form>
+        }
+      </details>
     </main>
   `,
   styles: [`main{max-width:760px;margin:auto;padding:2rem;font:1rem system-ui;color:#16372a}
@@ -101,6 +143,8 @@ class App {
   readonly campanhas = signal<CampanhaPainel[] | null>(null);
   readonly linhas = signal(1);
   readonly linhasArr = computed(() => Array.from({ length: this.linhas() }, (_, i) => i));
+  readonly instituicoes = signal<InstAdmin[] | null>(null);
+  readonly codigoGerado = signal('');
   readonly retorno = signal('');
   readonly ocupado = signal(false);
 
@@ -169,6 +213,65 @@ class App {
     this.campanhas.set(await firstValueFrom(this.http.get<CampanhaPainel[]>('/api/painel/campanhas')));
   }
 
+  cadastrar(form: HTMLFormElement) {
+    const dados = new FormData(form);
+    void this.acao('/api/cadastro', {
+      nome: dados.get('nome'), contato: dados.get('contato'),
+      responsavel: { nome: dados.get('resp_nome'), contato: dados.get('resp_contato') }
+    }, async () => {
+      form.reset();
+      this.retorno.set('Cadastro enviado. A plataforma vai avaliar e entrar em contato.');
+    });
+  }
+
+  entrarAdmin(form: HTMLFormElement) {
+    const codigo = new FormData(form).get('codigo');
+    this.ocupado.set(true);
+    this.retorno.set('');
+    void firstValueFrom(this.http.post('/api/admin/entrar', { codigo }))
+      .then(() => { form.reset(); return this.carregarAdmin(); })
+      .catch((erro: unknown) => this.tratarErro(erro))
+      .finally(() => this.ocupado.set(false));
+  }
+
+  sairAdmin() {
+    void this.acao('/api/admin/sair', {}, async () => { this.instituicoes.set(null); this.codigoGerado.set(''); });
+  }
+
+  aprovar(id: number, form: HTMLFormElement) {
+    void this.acaoCodigo('/api/admin/aprovar', { id, hostname: new FormData(form).get('hostname') }, 'Instituição aprovada.');
+  }
+
+  regerar(id: number) {
+    void this.acaoCodigo('/api/admin/codigo', { id }, 'Novo código gerado.');
+  }
+
+  private async carregarAdmin() {
+    this.instituicoes.set(await firstValueFrom(this.http.get<InstAdmin[]>('/api/admin/instituicoes')));
+  }
+
+  private async acaoCodigo(path: string, dados: object, msg: string) {
+    this.ocupado.set(true);
+    this.retorno.set('');
+    this.codigoGerado.set('');
+    try {
+      const resposta = await firstValueFrom(this.http.post<{ codigo: string }>(path, dados));
+      this.codigoGerado.set(resposta.codigo);
+      await this.carregarAdmin();
+      this.retorno.set(msg);
+    } catch (erro: unknown) {
+      if (erro instanceof HttpErrorResponse && erro.status === 401) this.instituicoes.set(null);
+      this.tratarErro(erro);
+    } finally {
+      this.ocupado.set(false);
+    }
+  }
+
+  private tratarErro(erro: unknown) {
+    this.retorno.set(erro instanceof HttpErrorResponse && typeof erro.error?.erro === 'string'
+      ? erro.error.erro : 'Não foi possível concluir a solicitação.');
+  }
+
   private async acao(path: string, dados: object, sucesso: () => Promise<void>) {
     this.ocupado.set(true);
     this.retorno.set('');
@@ -177,8 +280,7 @@ class App {
       await sucesso();
     } catch (erro: unknown) {
       if (erro instanceof HttpErrorResponse && erro.status === 401) this.doacoes.set(null);
-      this.retorno.set(erro instanceof HttpErrorResponse && typeof erro.error?.erro === 'string'
-        ? erro.error.erro : 'Não foi possível concluir a solicitação.');
+      this.tratarErro(erro);
     } finally {
       this.ocupado.set(false);
     }

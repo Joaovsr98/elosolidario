@@ -1,20 +1,29 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, createHash, timingSafeEqual } from 'node:crypto';
 
 const keys = new Map(Object.entries(JSON.parse(process.env.ELO_PANEL_KEYS ?? '{}')));
 for (const key of keys.values()) {
   if (typeof key !== 'string' || !/^[a-f0-9]{64}$/.test(key)) throw new Error('Chave de painel inválida.');
 }
 
-function matches(expected, actual) {
+export const sha256 = (valor) => createHash('sha256').update(String(valor)).digest('hex');
+
+export function matches(expected, actual) {
   return typeof actual === 'string' && Buffer.byteLength(actual) === Buffer.byteLength(expected)
     && timingSafeEqual(Buffer.from(expected), Buffer.from(actual));
 }
 
-function signature(key, host, expires) {
+export function signature(key, host, expires) {
   return createHmac('sha256', key).update(host + ':' + expires).digest('hex');
 }
 
-async function body(req) {
+export function originRejected(req, host) {
+  const origin = req.headers.origin;
+  return (origin !== 'https://' + req.headers.host
+      && !(host === 'localhost' && origin === 'http://' + req.headers.host))
+    || !/^application\/json(?:;|$)/i.test(req.headers['content-type'] ?? '');
+}
+
+export async function body(req) {
   let data = '';
   for await (const chunk of req.setEncoding('utf8')) {
     data += chunk;
@@ -23,27 +32,26 @@ async function body(req) {
   try { return JSON.parse(data); } catch { return null; }
 }
 
-export async function donations(req, res, db, json, path, host, institution) {
-  const key = keys.get(host);
+export async function donations(req, res, db, json, path, host, instituicao) {
+  const institution = instituicao.id;
+  const envKey = keys.get(host);
+  const signKey = instituicao.codigo_hash || (envKey ? sha256(envKey) : null);
   const cookie = (req.headers.cookie ?? '').match(/(?:^|;\s*)elo_panel=(\d+)\.([a-f0-9]{64})(?:;|$)/);
-  const authorized = key && cookie && Number(cookie[1]) > Date.now()
-    && matches(signature(key, host, cookie[1]), cookie[2]);
+  const authorized = signKey && cookie && Number(cookie[1]) > Date.now()
+    && matches(signature(signKey, host, cookie[1]), cookie[2]);
   const reject = (status, erro) => json(res, status, { erro });
 
   if (req.method === 'POST') {
-    const origin = req.headers.origin;
-    if ((origin !== 'https://' + req.headers.host &&
-         !(host === 'localhost' && origin === 'http://' + req.headers.host))
-        || !/^application\/json(?:;|$)/i.test(req.headers['content-type'] ?? '')) {
-      return reject(403, 'Origem inválida.');
-    }
+    if (originRejected(req, host)) return reject(403, 'Origem inválida.');
     const data = await body(req);
     if (!data || typeof data !== 'object') return reject(400, 'Confira os dados.');
     if (path === '/api/painel/entrar') {
-      if (!key) return reject(503, 'Painel ainda não configurado.');
-      if (!matches(key, data.codigo)) return reject(401, 'Código inválido.');
+      if (!signKey) return reject(503, 'Painel ainda não configurado.');
+      if (typeof data.codigo !== 'string' || !matches(signKey, sha256(data.codigo))) {
+        return reject(401, 'Código inválido.');
+      }
       const expires = Date.now() + 28_800_000;
-      res.setHeader('Set-Cookie', 'elo_panel=' + expires + '.' + signature(key, host, expires)
+      res.setHeader('Set-Cookie', 'elo_panel=' + expires + '.' + signature(signKey, host, expires)
         + '; Path=/api/painel; Max-Age=28800; HttpOnly; SameSite=Strict' + (host === 'localhost' ? '' : '; Secure'));
       return json(res, 200, { ok: true });
     }

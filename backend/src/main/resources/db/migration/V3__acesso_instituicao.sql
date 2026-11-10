@@ -1,0 +1,13 @@
+ALTER TABLE instituicao
+    ADD COLUMN codigo_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_general_ci NULL,
+    ADD COLUMN contato VARCHAR(255) NULL,
+    ADD COLUMN criada_em DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6);
+
+CREATE TABLE responsavel (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    instituicao_id BIGINT NOT NULL,
+    nome VARCHAR(160) NOT NULL,
+    contato VARCHAR(255) NOT NULL,
+    criado_em DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    CONSTRAINT fk_responsavel_instituicao FOREIGN KEY (instituicao_id) REFERENCES instituicao (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

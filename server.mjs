@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { donations } from './doacoes.mjs';
+import { cadastro, admin } from './instituicoes.mjs';
 import { createPool } from 'mysql2/promise';
 
 if (!process.env.MYSQL_URL) throw new Error('Configure MYSQL_URL.');
@@ -20,12 +21,14 @@ createServer(async (req, res) => {
       await db.query('SELECT hostname FROM instituicao LIMIT 0');
       return json(res, 200, { ok: true });
     }
+    if (path.startsWith('/api/admin/')) return await admin(req, res, db, json, path);
+    if (path === '/api/cadastro') return await cadastro(req, res, db, json);
     if (path.startsWith('/api/')) {
       const host = (req.headers.host ?? '').toLowerCase().replace(/:\d+$/, '');
       const [[instituicao]] = await db.execute(
-        'SELECT id, nome FROM instituicao WHERE hostname = ? AND aprovada_em IS NOT NULL', [host]);
+        'SELECT id, nome, codigo_hash FROM instituicao WHERE hostname = ? AND aprovada_em IS NOT NULL', [host]);
       if (!instituicao) return json(res, 404, { erro: 'Instituição indisponível' });
-      if (path !== '/api/campanhas') return await donations(req, res, db, json, path, host, instituicao.id);
+      if (path !== '/api/campanhas') return await donations(req, res, db, json, path, host, instituicao);
       if (req.method !== 'GET') return json(res, 405, { erro: 'Método indisponível' });
       const [rows] = await db.execute(`
         SELECT c.id, c.titulo, c.descricao, n.id AS item_id, n.nome, n.unidade, n.quantidade_meta AS meta
