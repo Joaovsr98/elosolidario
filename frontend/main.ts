@@ -310,15 +310,15 @@ interface Empresa { nome: string; confirmadas: number }
     .row-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin:.7rem 0}
     label{display:block;margin:.6rem 0;color:var(--muted);font-size:.9rem}
     input,textarea{display:block;width:100%;box-sizing:border-box;margin-top:.3rem;
-      background:#0b1a30;color:var(--text);border:1px solid var(--line-2);border-radius:12px;
+      background:#1c3052;color:var(--text);border:1px solid var(--line-2);border-radius:12px;
       padding:.62rem .78rem;font:inherit;transition:border-color .15s,box-shadow .15s}
-    input::placeholder{color:#6d8099}
+    input::placeholder{color:#8ea3bf}
     input:focus,textarea:focus{outline:0;border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
     textarea{min-height:92px;resize:vertical}
     fieldset{border:1px dashed var(--line-2);border-radius:12px;padding:.4rem .85rem .7rem;margin:.65rem 0}
     form{margin:.5rem 0}
     .search{display:flex;gap:.5rem;align-items:center}
-    .search input{flex:1;margin-top:0;background-color:#0b1a30;
+    .search input{flex:1;margin-top:0;background-color:#1c3052;
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2393a7c2' stroke-width='2' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
       background-repeat:no-repeat;background-position:.75rem center;padding-left:2.2rem}
     .search button{flex:none}
@@ -337,7 +337,7 @@ interface Empresa { nome: string; confirmadas: number }
     ul.dir>li{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:.5rem .8rem;font-size:.95rem}
     li.empty{background:transparent;border:0;color:var(--muted);padding:.4rem 0}
     .codebox{font-family:ui-monospace,'Cascadia Code',monospace;word-break:break-all;
-      background:#0b1a30;border:1px dashed var(--gold);border-radius:12px;padding:.7rem .85rem;color:var(--gold-2)}
+      background:#16273f;border:1px dashed var(--gold);border-radius:12px;padding:.7rem .85rem;color:var(--gold-2)}
     details.accordion{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);margin:1.1rem 0;overflow:hidden}
     details.accordion>summary{cursor:pointer;padding:1rem 1.25rem;font-weight:600;list-style:none;display:flex;align-items:center}
     details.accordion>summary::-webkit-details-marker{display:none}
