@@ -33,7 +33,9 @@ createServer(async (req, res) => {
       if (path !== '/api/campanhas') return await donations(req, res, db, json, path, host, instituicao);
       if (req.method !== 'GET') return json(res, 405, { erro: 'Método indisponível' });
       const [rows] = await db.execute(`
-        SELECT c.id, c.titulo, c.descricao, n.id AS item_id, n.nome, n.unidade, n.quantidade_meta AS meta
+        SELECT c.id, c.titulo, c.descricao, n.id AS item_id, n.nome, n.unidade, n.quantidade_meta AS meta,
+          COALESCE((SELECT SUM(d.quantidade_oferecida) FROM intencao_doacao d
+                    WHERE d.necessidade_id = n.id AND d.recebida_em IS NOT NULL), 0) AS recebido
         FROM campanha c LEFT JOIN necessidade n ON n.campanha_id = c.id
         WHERE c.instituicao_id = ? AND c.publicada_em <= UTC_TIMESTAMP(6)
           AND (c.encerrada_em IS NULL OR c.encerrada_em > UTC_TIMESTAMP(6))
@@ -45,7 +47,7 @@ createServer(async (req, res) => {
           id: row.id, titulo: row.titulo, descricao: row.descricao, itens: []
         });
         if (row.item_id !== null) campanhas.get(row.id).itens.push({
-          id: row.item_id, nome: row.nome, unidade: row.unidade, meta: row.meta
+          id: row.item_id, nome: row.nome, unidade: row.unidade, meta: row.meta, recebido: Number(row.recebido)
         });
       }
       return json(res, 200, { instituicao: instituicao.nome, campanhas: [...campanhas.values()] });

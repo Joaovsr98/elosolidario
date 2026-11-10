@@ -5,14 +5,14 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
 
 interface Doacao { id: number; nome: string; contato: string; quantidade: number; recebida: number; item: string; campanha: string }
-interface Item { id: number; nome: string; unidade: string; meta: number }
+interface Item { id: number; nome: string; unidade: string; meta: number; recebido?: number }
 interface Campanha { id: number; titulo: string; descricao: string; itens: Item[] }
 interface CampanhaPainel { id: number; titulo: string; descricao: string; publicada: boolean; encerrada: boolean; itens: Item[] }
 interface Catalogo { instituicao: string; campanhas: Campanha[] }
 interface Responsavel { id: number; nome: string; contato: string }
 interface InstAdmin { id: number; nome: string; hostname: string | null; contato: string | null; aprovada: boolean; responsaveis: Responsavel[] }
 interface RankItem { nome: string; pontos: number }
-interface Empresa { nome: string; confirmadas: number }
+interface Empresa { nome: string; confirmadas: number; selos: string[] }
 
 @Component({
   selector: 'elo-app',
@@ -89,7 +89,8 @@ interface Empresa { nome: string; confirmadas: number }
               <p class="muted">{{ campanha.descricao }}</p>
               <ul class="needs">@for (item of campanha.itens; track item.id) {
                 <li>
-                  <div class="need-row"><strong>{{ item.nome }}</strong><span class="meta">Meta de {{ item.meta }} {{ item.unidade }}</span></div>
+                  <div class="need-row"><strong>{{ item.nome }}</strong><span class="meta">{{ item.recebido || 0 }} de {{ item.meta }} {{ item.unidade }} recebidos</span></div>
+                  <div class="bar"><span [style.width.%]="pct(item)"></span></div>
                   <details><summary>Quero doar</summary>
                     <form #form (submit)="$event.preventDefault(); doar(item.id, form)">
                       <label>Nome <input name="nome" required maxlength="160"></label>
@@ -183,7 +184,9 @@ interface Empresa { nome: string; confirmadas: number }
             <button class="ghost">Buscar</button>
           </form>
           <ul class="dir">@for (empresa of empresas(); track empresa.nome) {
-            <li>{{ empresa.nome }}@if (empresa.confirmadas) { <span class="meta"> · {{ empresa.confirmadas }} confirmada(s)</span> }</li>
+            <li><strong>{{ empresa.nome }}</strong>@if (empresa.confirmadas) { <span class="meta"> · {{ empresa.confirmadas }} confirmada(s)</span> }
+              @if (empresa.selos.length) { <span class="selos">@for (s of empresa.selos; track s) { <span class="selo">{{ s }}</span> }</span> }
+            </li>
           } @empty { <li class="empty">Nenhuma empresa encontrada.</li> }</ul>
         </section>
         <details class="accordion" id="cadastrar"><summary>Cadastrar minha instituição</summary>
@@ -357,6 +360,10 @@ interface Empresa { nome: string; confirmadas: number }
     ul.dir{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:.4rem}
     ul.dir>li{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:.5rem .8rem;font-size:.95rem}
     li.empty{background:transparent;border:0;color:var(--muted);padding:.4rem 0}
+    .bar{height:7px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin:.55rem 0 .15rem}
+    .bar>span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#1b9fd8,var(--gold));transition:width .5s ease}
+    .selos{display:inline-flex;gap:.35rem;flex-wrap:wrap;margin-top:.35rem}
+    .selo{font-size:.7rem;font-weight:600;padding:.14rem .55rem;border-radius:999px;background:var(--green-soft);color:var(--green-2)}
     .codebox{font-family:ui-monospace,'Cascadia Code',monospace;word-break:break-all;
       background:#16273f;border:1px dashed var(--gold);border-radius:12px;padding:.7rem .85rem;color:var(--gold-2)}
     details.accordion{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);margin:1.1rem 0;overflow:hidden}
@@ -392,6 +399,8 @@ class App {
   readonly linhas = signal(1);
   readonly linhasArr = computed(() => Array.from({ length: this.linhas() }, (_, i) => i));
   readonly itensAbertos = computed(() => (this.catalogo()?.campanhas ?? []).reduce((soma, c) => soma + c.itens.length, 0));
+
+  pct(item: Item) { return item.meta ? Math.min(100, Math.round((item.recebido ?? 0) / item.meta * 100)) : 0; }
   readonly instituicoes = signal<InstAdmin[] | null>(null);
   readonly codigoGerado = signal('');
   readonly ranking = signal<RankItem[]>([]);
