@@ -20,7 +20,7 @@ interface Empresa { nome: string; confirmadas: number }
     <div class="page">
       <header class="topbar">
         <div class="inner">
-          <span class="mark">◈</span>
+          <span class="mark">E</span>
           <span class="brand">Elo Brasil Solidário<small>Rede de solidariedade</small></span>
         </div>
       </header>
@@ -186,39 +186,42 @@ interface Empresa { nome: string; confirmadas: number }
   `,
   styles: [`
     :host{
-      --bg:#0a0a0a;--surface:#161616;--surface-2:#1e1e1e;
-      --line:rgba(255,255,255,.09);--line-2:rgba(255,255,255,.17);
-      --text:#f2ede6;--muted:#a7a199;
-      --gold:#c9a96e;--gold-2:#ddc08a;
-      --green:#46b981;--green-2:#8fe3b8;--green-soft:rgba(70,185,129,.14);
-      --danger:#e0776b;--radius:18px;
-      display:block;color:var(--text);line-height:1.5;
+      --bg:#0a1324;--surface:#0f1d33;--surface-2:#152541;
+      --line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.16);
+      --text:#eef3fa;--muted:#9bb0c9;
+      --gold:#cfa968;--gold-2:#e6c78c;
+      --green:#7ea8e6;--green-2:#a9c7f2;--green-soft:rgba(126,168,230,.15);
+      --danger:#e68b82;--radius:18px;
+      display:block;color:var(--text);line-height:1.55;
       font-family:'DM Sans',system-ui,sans-serif;
     }
+    @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
     .page{min-height:100vh;display:flex;flex-direction:column;
       background:
-        radial-gradient(1100px 520px at 50% -12%, rgba(70,185,129,.10), transparent 60%),
-        radial-gradient(760px 480px at 92% 6%, rgba(201,169,110,.08), transparent 55%),
+        radial-gradient(1100px 560px at 50% -14%, rgba(126,168,230,.14), transparent 62%),
+        radial-gradient(780px 480px at 90% 4%, rgba(207,169,104,.08), transparent 55%),
         var(--bg);}
-    .topbar{position:sticky;top:0;z-index:5;background:rgba(10,10,10,.72);
+    .topbar{position:sticky;top:0;z-index:5;background:rgba(10,19,36,.78);
       backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
     .topbar .inner{max-width:880px;margin:0 auto;padding:.8rem 1.25rem;display:flex;align-items:center;gap:.7rem}
-    .mark{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;flex:none;
-      background:linear-gradient(145deg,var(--green),#2b8c5f);color:#06130d;font-size:1rem}
+    .mark{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;flex:none;
+      border:1px solid var(--gold);color:var(--gold);background:rgba(207,169,104,.08);
+      font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.15rem}
     .brand{font-weight:700;letter-spacing:.2px;line-height:1.1}
     .brand small{display:block;font-weight:500;font-size:.68rem;color:var(--muted);
       letter-spacing:.16em;text-transform:uppercase}
     main{width:100%;max-width:880px;margin:0 auto;padding:1rem 1.25rem 3.5rem;box-sizing:border-box;flex:1}
     .toast{margin:1rem 0;padding:.75rem 1rem;border-radius:12px;font-weight:500;
       background:var(--green-soft);border:1px solid rgba(70,185,129,.4);color:var(--green-2)}
-    .hero{padding:2.4rem 0 1rem}
+    .hero{padding:2.4rem 0 1rem;animation:rise .55s ease both}
     .eyebrow{font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;color:var(--green-2);font-weight:600;margin:0 0 .55rem}
     h1{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:clamp(2.1rem,6.5vw,3.4rem);
       line-height:1.04;letter-spacing:-.01em;margin:.1rem 0 .55rem}
     .lede{color:var(--muted);max-width:54ch;font-size:1.06rem;margin:0}
-    .card{background:linear-gradient(180deg,var(--surface),#111);border:1px solid var(--line);
-      border-radius:var(--radius);padding:1.3rem;margin:1.1rem 0;transition:border-color .15s}
-    .card:hover{border-color:var(--line-2)}
+    .card{background:linear-gradient(180deg,var(--surface),#0c1829);border:1px solid var(--line);
+      border-radius:var(--radius);padding:1.3rem;margin:1.1rem 0;
+      transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;animation:rise .5s ease both}
+    .card:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:0 18px 40px rgba(0,0,0,.35)}
     h2{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:1.5rem;margin:0 0 .5rem}
     h3{font-size:.76rem;text-transform:uppercase;letter-spacing:.15em;color:var(--green-2);
       font-weight:600;margin:1.5rem 0 .7rem}
@@ -242,9 +245,9 @@ interface Empresa { nome: string; confirmadas: number }
     .row-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin:.7rem 0}
     label{display:block;margin:.6rem 0;color:var(--muted);font-size:.9rem}
     input,textarea{display:block;width:100%;box-sizing:border-box;margin-top:.3rem;
-      background:#0e0e0e;color:var(--text);border:1px solid var(--line-2);border-radius:12px;
-      padding:.62rem .78rem;font:inherit}
-    input::placeholder{color:#6f6a62}
+      background:#0b1a30;color:var(--text);border:1px solid var(--line-2);border-radius:12px;
+      padding:.62rem .78rem;font:inherit;transition:border-color .15s,box-shadow .15s}
+    input::placeholder{color:#6d8099}
     input:focus,textarea:focus{outline:0;border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
     textarea{min-height:92px;resize:vertical}
     fieldset{border:1px dashed var(--line-2);border-radius:12px;padding:.4rem .85rem .7rem;margin:.65rem 0}
@@ -267,7 +270,7 @@ interface Empresa { nome: string; confirmadas: number }
     ul.dir>li{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:.5rem .8rem;font-size:.95rem}
     li.empty{background:transparent;border:0;color:var(--muted);padding:.4rem 0}
     .codebox{font-family:ui-monospace,'Cascadia Code',monospace;word-break:break-all;
-      background:#0e0e0e;border:1px dashed var(--green);border-radius:12px;padding:.7rem .85rem;color:var(--green-2)}
+      background:#0b1a30;border:1px dashed var(--gold);border-radius:12px;padding:.7rem .85rem;color:var(--gold-2)}
     details.accordion{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);margin:1.1rem 0;overflow:hidden}
     details.accordion>summary{cursor:pointer;padding:1rem 1.25rem;font-weight:600;list-style:none;display:flex;align-items:center}
     details.accordion>summary::-webkit-details-marker{display:none}
@@ -282,6 +285,7 @@ interface Empresa { nome: string; confirmadas: number }
     details:not(.accordion)[open]>summary::before{content:'↓ '}
     footer{border-top:1px solid var(--line);color:var(--muted);font-size:.84rem;text-align:center;padding:1.6rem 1.25rem}
     @media (max-width:560px){ main{padding:1rem 1rem 3rem} .card{padding:1.1rem} }
+    @media (prefers-reduced-motion:reduce){ .card,.hero{animation:none} .card:hover{transform:none} }
   `]
 })
 class App {
