@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { donations } from './doacoes.mjs';
 import { createPool } from 'mysql2/promise';
 
 if (!process.env.MYSQL_URL) throw new Error('Configure MYSQL_URL.');
@@ -14,17 +15,18 @@ function json(res, status, data) {
 
 createServer(async (req, res) => {
   try {
-    if (req.method !== 'GET') return json(res, 405, { erro: 'Método indisponível' });
     const path = new URL(req.url, 'http://localhost').pathname;
-    if (path === '/health') {
+    if (req.method === 'GET' && path === '/health') {
       await db.query('SELECT hostname FROM instituicao LIMIT 0');
       return json(res, 200, { ok: true });
     }
-    if (path === '/api/campanhas') {
+    if (path.startsWith('/api/')) {
       const host = (req.headers.host ?? '').toLowerCase().replace(/:\d+$/, '');
       const [[instituicao]] = await db.execute(
         'SELECT id, nome FROM instituicao WHERE hostname = ? AND aprovada_em IS NOT NULL', [host]);
       if (!instituicao) return json(res, 404, { erro: 'Instituição indisponível' });
+      if (path !== '/api/campanhas') return await donations(req, res, db, json, path, host, instituicao.id);
+      if (req.method !== 'GET') return json(res, 405, { erro: 'Método indisponível' });
       const [rows] = await db.execute(`
         SELECT c.id, c.titulo, c.descricao, n.id AS item_id, n.nome, n.unidade, n.quantidade_meta AS meta
         FROM campanha c LEFT JOIN necessidade n ON n.campanha_id = c.id
@@ -43,6 +45,7 @@ createServer(async (req, res) => {
       }
       return json(res, 200, { instituicao: instituicao.nome, campanhas: [...campanhas.values()] });
     }
+    if (req.method !== 'GET') return json(res, 405, { erro: 'Método indisponível' });
     const asset = path === '/' ? '/index.html' : path;
     const type = /^\/[a-zA-Z0-9_.-]+\.(html|js|css)$/.test(asset) && mime.get(asset.slice(asset.lastIndexOf('.')));
     if (!type) return json(res, 404, { erro: 'Página indisponível' });
