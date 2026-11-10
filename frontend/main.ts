@@ -122,9 +122,17 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
                       @else if (c.publicada) { <span class="badge ok">Publicada</span> }
                       @else { <span class="badge warn">Rascunho</span> }
                     </p>
-                    @if (c.publicada && !c.encerrada) {
-                      <button class="ghost" [disabled]="ocupado()" (click)="encerrar(c.id)">Encerrar campanha</button>
-                    }
+                    <div class="row-actions">
+                      @if (!c.publicada) { <button [disabled]="ocupado()" (click)="publicar(c.id)">Publicar</button> }
+                      @if (c.publicada && !c.encerrada) { <button class="ghost" [disabled]="ocupado()" (click)="encerrar(c.id)">Encerrar</button> }
+                    </div>
+                    <details><summary>Editar campanha</summary>
+                      <form #ed (submit)="$event.preventDefault(); editarCampanha(c.id, ed)">
+                        <label>Título <input name="titulo" [value]="c.titulo" required maxlength="160"></label>
+                        <label>Descrição <textarea name="descricao" required maxlength="2000">{{ c.descricao }}</textarea></label>
+                        <button [disabled]="ocupado()">Salvar alterações</button>
+                      </form>
+                    </details>
                   </div>
                 } @empty { <p class="muted">Nenhuma campanha cadastrada.</p> }
               }
@@ -139,9 +147,10 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
                       <label>Meta <input name="item_meta" type="number" min="1" max="1000000"></label>
                     </fieldset>
                   }
+                  <label class="check"><input type="checkbox" name="publicar" checked> Publicar agora (desmarque para salvar como rascunho)</label>
                   <div class="row-actions">
                     <button type="button" class="ghost" [disabled]="ocupado()" (click)="linhas.set(linhas() + 1)">Adicionar item</button>
-                    <button [disabled]="ocupado()">Publicar campanha</button>
+                    <button [disabled]="ocupado()">Criar campanha</button>
                   </div>
                 </form>
               </details>
@@ -337,6 +346,8 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
       background:#1c3052;color:var(--text);border:1px solid var(--line-2);border-radius:12px;
       padding:.62rem .78rem;font:inherit;transition:border-color .15s,box-shadow .15s}
     input::placeholder{color:#8ea3bf}
+    input[type=checkbox]{width:auto;display:inline-block;margin:0 .45rem 0 0;vertical-align:middle;accent-color:var(--gold)}
+    label.check{display:flex;align-items:center;color:var(--text);font-size:.92rem;margin:.8rem 0}
     input:focus,textarea:focus{outline:0;border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
     textarea{min-height:92px;resize:vertical}
     fieldset{border:1px dashed var(--line-2);border-radius:12px;padding:.4rem .85rem .7rem;margin:.65rem 0}
@@ -447,13 +458,14 @@ class App {
       unidade: String(unidades[i] ?? '').trim(),
       meta: Number(metas[i])
     })).filter(item => item.nome || item.unidade || item.meta);
+    const publicar = dados.get('publicar') != null;
     void this.acao('/api/painel/campanhas', {
-      titulo: dados.get('titulo'), descricao: dados.get('descricao'), itens
+      titulo: dados.get('titulo'), descricao: dados.get('descricao'), itens, publicar
     }, async () => {
       form.reset();
       this.linhas.set(1);
       await this.carregarCampanhas();
-      this.retorno.set('Campanha publicada.');
+      this.retorno.set(publicar ? 'Campanha publicada.' : 'Rascunho salvo.');
     });
   }
 
@@ -461,6 +473,22 @@ class App {
     void this.acao('/api/painel/campanhas/encerrar', { id }, async () => {
       await this.carregarCampanhas();
       this.retorno.set('Campanha encerrada.');
+    });
+  }
+
+  publicar(id: number) {
+    void this.acao('/api/painel/campanhas/publicar', { id }, async () => {
+      await this.carregarCampanhas();
+      this.retorno.set('Campanha publicada.');
+    });
+  }
+
+  editarCampanha(id: number, form: HTMLFormElement) {
+    const dados = new FormData(form);
+    void this.acao('/api/painel/campanhas/editar',
+      { id, titulo: dados.get('titulo'), descricao: dados.get('descricao') }, async () => {
+      await this.carregarCampanhas();
+      this.retorno.set('Campanha atualizada.');
     });
   }
 

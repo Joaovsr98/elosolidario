@@ -114,6 +114,7 @@ export async function donations(req, res, db, json, path, host, instituicao) {
     }
     if (path === '/api/painel/campanhas') {
       if (!authorized) return reject(401, 'Entre no painel.');
+      const publicar = data.publicar !== false;
       const titulo = typeof data.titulo === 'string' ? data.titulo.trim() : '';
       const descricao = typeof data.descricao === 'string' ? data.descricao.trim() : '';
       const itens = Array.isArray(data.itens) ? data.itens : [];
@@ -136,7 +137,8 @@ export async function donations(req, res, db, json, path, host, instituicao) {
       try {
         await conn.beginTransaction();
         const [campanha] = await conn.execute(
-          'INSERT INTO campanha (instituicao_id, titulo, descricao, publicada_em) VALUES (?, ?, ?, UTC_TIMESTAMP(6))',
+          'INSERT INTO campanha (instituicao_id, titulo, descricao, publicada_em) VALUES (?, ?, ?, '
+            + (publicar ? 'UTC_TIMESTAMP(6)' : 'NULL') + ')',
           [institution, titulo, descricao]);
         for (const [nome, unidade, meta] of limpos) {
           await conn.execute(
@@ -159,6 +161,27 @@ export async function donations(req, res, db, json, path, host, instituicao) {
         UPDATE campanha SET encerrada_em = COALESCE(encerrada_em, GREATEST(UTC_TIMESTAMP(6), publicada_em))
         WHERE id = ? AND instituicao_id = ? AND publicada_em IS NOT NULL
       `, [data.id, institution]);
+      return result.affectedRows ? json(res, 200, { ok: true }) : reject(404, 'Campanha indisponível.');
+    }
+    if (path === '/api/painel/campanhas/publicar') {
+      if (!authorized) return reject(401, 'Entre no painel.');
+      if (!Number.isSafeInteger(data.id) || data.id < 1) return reject(400, 'Campanha inválida.');
+      const [result] = await db.execute(
+        'UPDATE campanha SET publicada_em = COALESCE(publicada_em, UTC_TIMESTAMP(6)) WHERE id = ? AND instituicao_id = ?',
+        [data.id, institution]);
+      return result.affectedRows ? json(res, 200, { ok: true }) : reject(404, 'Campanha indisponível.');
+    }
+    if (path === '/api/painel/campanhas/editar') {
+      if (!authorized) return reject(401, 'Entre no painel.');
+      const titulo = typeof data.titulo === 'string' ? data.titulo.trim() : '';
+      const descricao = typeof data.descricao === 'string' ? data.descricao.trim() : '';
+      if (!Number.isSafeInteger(data.id) || data.id < 1 || !titulo || titulo.length > 160
+        || !descricao || descricao.length > 2000) {
+        return reject(400, 'Confira os dados da campanha.');
+      }
+      const [result] = await db.execute(
+        'UPDATE campanha SET titulo = ?, descricao = ? WHERE id = ? AND instituicao_id = ?',
+        [titulo, descricao, data.id, institution]);
       return result.affectedRows ? json(res, 200, { ok: true }) : reject(404, 'Campanha indisponível.');
     }
   }
