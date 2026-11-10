@@ -7,6 +7,9 @@ for (const key of keys.values()) {
 
 export const sha256 = (valor) => createHash('sha256').update(String(valor)).digest('hex');
 
+const normalizar = (nome) =>
+  nome.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/\s+/g, ' ');
+
 export function matches(expected, actual) {
   return typeof actual === 'string' && Buffer.byteLength(actual) === Buffer.byteLength(expected)
     && timingSafeEqual(Buffer.from(expected), Buffer.from(actual));
@@ -63,18 +66,40 @@ export async function donations(req, res, db, json, path, host, instituicao) {
     if (path === '/api/doacoes') {
       const nome = typeof data.nome === 'string' ? data.nome.trim() : '';
       const contato = typeof data.contato === 'string' ? data.contato.trim() : '';
-      if (!nome || nome.length > 160 || !contato || contato.length > 255
+      const empresaNome = typeof data.empresa === 'string' ? data.empresa.trim() : '';
+      if (!nome || nome.length > 160 || !contato || contato.length > 255 || empresaNome.length > 160
         || !Number.isSafeInteger(data.item) || data.item < 1
         || !Number.isSafeInteger(data.quantidade) || data.quantidade < 1 || data.quantidade > 1000000) {
         return reject(400, 'Confira os dados da doação.');
       }
-      const [result] = await db.execute(`
-        INSERT INTO intencao_doacao (necessidade_id, doador_nome, doador_contato, quantidade_oferecida)
-        SELECT n.id, ?, ?, ? FROM necessidade n JOIN campanha c ON c.id = n.campanha_id
-        WHERE n.id = ? AND c.instituicao_id = ? AND c.publicada_em <= UTC_TIMESTAMP(6)
-          AND (c.encerrada_em IS NULL OR c.encerrada_em > UTC_TIMESTAMP(6))
-      `, [nome, contato, data.quantidade, data.item, institution]);
-      return result.affectedRows ? json(res, 201, { ok: true }) : reject(404, 'Item indisponível.');
+      const conn = await db.getConnection();
+      try {
+        await conn.beginTransaction();
+        let empresaId = null;
+        const normalizado = empresaNome ? normalizar(empresaNome) : '';
+        if (normalizado) {
+          await conn.execute(
+            'INSERT INTO empresa (nome, nome_normalizado) VALUES (?, ?) ON DUPLICATE KEY UPDATE id = id',
+            [empresaNome, normalizado]);
+          const [[empresa]] = await conn.execute(
+            'SELECT id FROM empresa WHERE nome_normalizado = ?', [normalizado]);
+          empresaId = empresa.id;
+        }
+        const [result] = await conn.execute(`
+          INSERT INTO intencao_doacao (necessidade_id, doador_nome, doador_contato, quantidade_oferecida, empresa_id)
+          SELECT n.id, ?, ?, ?, ? FROM necessidade n JOIN campanha c ON c.id = n.campanha_id
+          WHERE n.id = ? AND c.instituicao_id = ? AND c.publicada_em <= UTC_TIMESTAMP(6)
+            AND (c.encerrada_em IS NULL OR c.encerrada_em > UTC_TIMESTAMP(6))
+        `, [nome, contato, data.quantidade, empresaId, data.item, institution]);
+        if (!result.affectedRows) { await conn.rollback(); return reject(404, 'Item indisponível.'); }
+        await conn.commit();
+        return json(res, 201, { ok: true });
+      } catch (error) {
+        await conn.rollback();
+        throw error;
+      } finally {
+        conn.release();
+      }
     }
     if (path === '/api/painel/receber') {
       if (!authorized) return reject(401, 'Entre no painel.');

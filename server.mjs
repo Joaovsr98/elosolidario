@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { donations } from './doacoes.mjs';
 import { cadastro, admin } from './instituicoes.mjs';
+import { empresas } from './empresas.mjs';
 import { createPool } from 'mysql2/promise';
 
 if (!process.env.MYSQL_URL) throw new Error('Configure MYSQL_URL.');
@@ -23,6 +24,7 @@ createServer(async (req, res) => {
     }
     if (path.startsWith('/api/admin/')) return await admin(req, res, db, json, path);
     if (path === '/api/cadastro') return await cadastro(req, res, db, json);
+    if (path === '/api/ranking' || path === '/api/empresas') return await empresas(req, res, db, json, path);
     if (path.startsWith('/api/')) {
       const host = (req.headers.host ?? '').toLowerCase().replace(/:\d+$/, '');
       const [[instituicao]] = await db.execute(

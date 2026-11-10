@@ -11,6 +11,8 @@ interface CampanhaPainel { id: number; titulo: string; descricao: string; public
 interface Catalogo { instituicao: string; campanhas: Campanha[] }
 interface Responsavel { id: number; nome: string; contato: string }
 interface InstAdmin { id: number; nome: string; hostname: string | null; contato: string | null; aprovada: boolean; responsaveis: Responsavel[] }
+interface RankItem { nome: string; pontos: number }
+interface Empresa { nome: string; confirmadas: number }
 
 @Component({
   selector: 'elo-app',
@@ -28,6 +30,7 @@ interface InstAdmin { id: number; nome: string; hostname: string | null; contato
                   <form #form (submit)="$event.preventDefault(); doar(item.id, form)">
                     <label>Nome <input name="nome" required maxlength="160"></label>
                     <label>Contato <input name="contato" required maxlength="255"></label>
+                    <label>Empresa (se você representa uma) <input name="empresa" maxlength="160"></label>
                     <label>Quantidade <input name="quantidade" type="number" min="1" max="1000000" required></label>
                     <button [disabled]="ocupado()">Registrar intenção</button>
                   </form>
@@ -89,6 +92,21 @@ interface InstAdmin { id: number; nome: string; hostname: string | null; contato
           }
         </section>
       } @else { <p role="status">{{ mensagem() }}</p> }
+      <section>
+        <h2>Empresas doadoras</h2>
+        <h3>Top 10 do trimestre</h3>
+        <ol>@for (empresa of ranking(); track empresa.nome) {
+          <li>{{ empresa.nome }} — {{ empresa.pontos }} confirmada(s)</li>
+        } @empty { <li>Ainda sem doações confirmadas neste trimestre.</li> }</ol>
+        <h3>Diretório</h3>
+        <form #busca (submit)="$event.preventDefault(); buscarEmpresas(busca)">
+          <label>Buscar empresa <input name="q" maxlength="160"></label>
+          <button>Buscar</button>
+        </form>
+        <ul>@for (empresa of empresas(); track empresa.nome) {
+          <li>{{ empresa.nome }}@if (empresa.confirmadas) { · {{ empresa.confirmadas }} confirmada(s)}</li>
+        } @empty { <li>Nenhuma empresa encontrada.</li> }</ul>
+      </section>
       <details><summary>Cadastrar minha instituição</summary>
         <form #cad (submit)="$event.preventDefault(); cadastrar(cad)">
           <label>Nome da instituição <input name="nome" required maxlength="160"></label>
@@ -145,6 +163,8 @@ class App {
   readonly linhasArr = computed(() => Array.from({ length: this.linhas() }, (_, i) => i));
   readonly instituicoes = signal<InstAdmin[] | null>(null);
   readonly codigoGerado = signal('');
+  readonly ranking = signal<RankItem[]>([]);
+  readonly empresas = signal<Empresa[]>([]);
   readonly retorno = signal('');
   readonly ocupado = signal(false);
 
@@ -152,7 +172,7 @@ class App {
     const dados = new FormData(form);
     void this.acao('/api/doacoes', {
       item, nome: dados.get('nome'), contato: dados.get('contato'),
-      quantidade: Number(dados.get('quantidade'))
+      empresa: dados.get('empresa'), quantidade: Number(dados.get('quantidade'))
     }, async () => {
       form.reset();
       this.retorno.set('Intenção registrada. A instituição poderá entrar em contato.');
@@ -211,6 +231,18 @@ class App {
 
   private async carregarCampanhas() {
     this.campanhas.set(await firstValueFrom(this.http.get<CampanhaPainel[]>('/api/painel/campanhas')));
+  }
+
+  buscarEmpresas(form: HTMLFormElement) {
+    const q = String(new FormData(form).get('q') ?? '');
+    this.http.get<Empresa[]>('/api/empresas', { params: { q } }).subscribe({
+      next: dados => this.empresas.set(dados), error: () => {}
+    });
+  }
+
+  private carregarEmpresas() {
+    this.http.get<RankItem[]>('/api/ranking').subscribe({ next: dados => this.ranking.set(dados), error: () => {} });
+    this.http.get<Empresa[]>('/api/empresas').subscribe({ next: dados => this.empresas.set(dados), error: () => {} });
   }
 
   cadastrar(form: HTMLFormElement) {
@@ -287,6 +319,7 @@ class App {
   }
 
   constructor() {
+    this.carregarEmpresas();
     void this.carregarPainel().catch(() => {});
     this.http.get<Catalogo>('/api/campanhas').subscribe({
       next: dados => this.catalogo.set(dados),

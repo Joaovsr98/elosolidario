@@ -19,3 +19,9 @@ A migração V3 (db/migration/V3__acesso_instituicao.sql) adiciona à instituiç
 O código do painel passa a ser validado pelo hash no banco. Para compatibilidade, se a instituição ainda não tem `codigo_hash`, o sistema cai de volta na ELO_PANEL_KEYS, então as instituições já configuradas continuam logando com o mesmo código. A publicação invalida as sessões abertas (o esquema de assinatura do cookie muda); basta entrar de novo.
 
 O cadastro público (`POST /api/cadastro`) cria uma instituição pendente com um responsável. A administração usa a variável ELO_ADMIN_KEY (um código aleatório de 64 caracteres hexadecimais minúsculos, igual às chaves de painel) e fica nas rotas `/api/admin/*`: lista todas as instituições, aprova (define o hostname, marca a aprovação e gera um código mostrado uma única vez) e regera o código. Gere uma chave com `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. O hostname atribuído na aprovação só funciona depois de configurado em Railway + DNS.
+
+## Empresas doadoras (migração V4)
+
+A migração V4 (db/migration/V4__empresas_doadoras.sql) cria a tabela `empresa` e adiciona `empresa_id` a `intencao_doacao`. Aplique V4 **antes** de publicar — a doação passa a gravar `empresa_id` e o ranking lê a tabela `empresa`.
+
+Na doação, um campo opcional de empresa faz *find-or-create* por nome normalizado (sem acentos, minúsculo), vinculando a intenção à empresa. Endpoints públicos cross-tenant: `GET /api/ranking` (Top 10 do trimestre corrente, 1 ponto por doação confirmada, filtrado por `recebida_em`; o histórico é preservado e a contagem recomeça por trimestre sem job de reset) e `GET /api/empresas?q=` (diretório com busca por nome). Valores e quantidades doados nunca são expostos.
