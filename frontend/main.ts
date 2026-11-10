@@ -1,4 +1,4 @@
-import { Component, inject, signal, provideZonelessChangeDetection } from '@angular/core';
+import { Component, inject, signal, computed, provideZonelessChangeDetection } from '@angular/core';
 import { HttpClient, HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { bootstrapApplication } from '@angular/platform-browser';
 
@@ -7,6 +7,7 @@ import { firstValueFrom } from 'rxjs';
 interface Doacao { id: number; nome: string; contato: string; quantidade: number; recebida: number; item: string; campanha: string }
 interface Item { id: number; nome: string; unidade: string; meta: number }
 interface Campanha { id: number; titulo: string; descricao: string; itens: Item[] }
+interface CampanhaPainel { id: number; titulo: string; descricao: string; publicada: boolean; encerrada: boolean; itens: Item[] }
 interface Catalogo { instituicao: string; campanhas: Campanha[] }
 
 @Component({
@@ -37,6 +38,36 @@ interface Catalogo { instituicao: string; campanhas: Campanha[] }
           <h2>Painel da instituição</h2>
           @if (doacoes(); as lista) {
             <button [disabled]="ocupado()" (click)="sair()">Sair</button>
+            <h3>Campanhas</h3>
+            @if (campanhas(); as cs) {
+              @for (c of cs; track c.id) {
+                <article>
+                  <h4>{{ c.titulo }}</h4><p>{{ c.descricao }}</p>
+                  <ul>@for (item of c.itens; track item.id) {
+                    <li>{{ item.nome }} · Meta de {{ item.meta }} {{ item.unidade }}</li>
+                  }</ul>
+                  <p>{{ c.encerrada ? 'Encerrada' : (c.publicada ? 'Publicada' : 'Rascunho') }}</p>
+                  @if (c.publicada && !c.encerrada) {
+                    <button [disabled]="ocupado()" (click)="encerrar(c.id)">Encerrar campanha</button>
+                  }
+                </article>
+              } @empty { <p>Nenhuma campanha cadastrada.</p> }
+            }
+            <details><summary>Nova campanha</summary>
+              <form #nova (submit)="$event.preventDefault(); criarCampanha(nova)">
+                <label>Título <input name="titulo" required maxlength="160"></label>
+                <label>Descrição <textarea name="descricao" required maxlength="2000"></textarea></label>
+                @for (linha of linhasArr(); track linha) {
+                  <fieldset>
+                    <label>Item <input name="item_nome" maxlength="160"></label>
+                    <label>Unidade <input name="item_unidade" maxlength="40"></label>
+                    <label>Meta <input name="item_meta" type="number" min="1" max="1000000"></label>
+                  </fieldset>
+                }
+                <button type="button" [disabled]="ocupado()" (click)="linhas.set(linhas() + 1)">Adicionar item</button>
+                <button [disabled]="ocupado()">Publicar campanha</button>
+              </form>
+            </details>
             @for (doacao of lista; track doacao.id) {
               <article>
                 <h3>{{ doacao.campanha }}</h3>
@@ -67,6 +98,9 @@ class App {
 
   private readonly http = inject(HttpClient);
   readonly doacoes = signal<Doacao[] | null>(null);
+  readonly campanhas = signal<CampanhaPainel[] | null>(null);
+  readonly linhas = signal(1);
+  readonly linhasArr = computed(() => Array.from({ length: this.linhas() }, (_, i) => i));
   readonly retorno = signal('');
   readonly ocupado = signal(false);
 
@@ -89,7 +123,7 @@ class App {
   }
 
   sair() {
-    void this.acao('/api/painel/sair', {}, async () => this.doacoes.set(null));
+    void this.acao('/api/painel/sair', {}, async () => { this.doacoes.set(null); this.campanhas.set(null); });
   }
 
   receber(id: number) {
@@ -99,8 +133,40 @@ class App {
     });
   }
 
+  criarCampanha(form: HTMLFormElement) {
+    const dados = new FormData(form);
+    const nomes = dados.getAll('item_nome');
+    const unidades = dados.getAll('item_unidade');
+    const metas = dados.getAll('item_meta');
+    const itens = nomes.map((nome, i) => ({
+      nome: String(nome).trim(),
+      unidade: String(unidades[i] ?? '').trim(),
+      meta: Number(metas[i])
+    })).filter(item => item.nome || item.unidade || item.meta);
+    void this.acao('/api/painel/campanhas', {
+      titulo: dados.get('titulo'), descricao: dados.get('descricao'), itens
+    }, async () => {
+      form.reset();
+      this.linhas.set(1);
+      await this.carregarCampanhas();
+      this.retorno.set('Campanha publicada.');
+    });
+  }
+
+  encerrar(id: number) {
+    void this.acao('/api/painel/campanhas/encerrar', { id }, async () => {
+      await this.carregarCampanhas();
+      this.retorno.set('Campanha encerrada.');
+    });
+  }
+
   private async carregarPainel() {
     this.doacoes.set(await firstValueFrom(this.http.get<Doacao[]>('/api/painel/doacoes')));
+    await this.carregarCampanhas();
+  }
+
+  private async carregarCampanhas() {
+    this.campanhas.set(await firstValueFrom(this.http.get<CampanhaPainel[]>('/api/painel/campanhas')));
   }
 
   private async acao(path: string, dados: object, sucesso: () => Promise<void>) {
