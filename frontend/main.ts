@@ -186,13 +186,13 @@ interface Empresa { nome: string; confirmadas: number }
   `,
   styles: [`
     :host{
-      --bg:#faf8f3;--surface:#ffffff;--surface-2:#f4f1ea;
-      --line:rgba(25,52,40,.10);--line-2:rgba(25,52,40,.18);
-      --text:#1b2e25;--muted:#6a756e;
-      --green:#1f8a5b;--green-2:#15704a;--green-soft:rgba(31,138,91,.12);
-      --gold:#b9822f;--gold-2:#9c6c22;
-      --danger:#c0493b;--radius:18px;
-      display:block;color:var(--text);line-height:1.55;
+      --bg:#0a0a0a;--surface:#161616;--surface-2:#1e1e1e;
+      --line:rgba(255,255,255,.09);--line-2:rgba(255,255,255,.17);
+      --text:#f2ede6;--muted:#a7a199;
+      --gold:#c9a96e;--gold-2:#ddc08a;
+      --green:#46b981;--green-2:#8fe3b8;--green-soft:rgba(70,185,129,.14);
+      --danger:#e0776b;--radius:18px;
+      display:block;color:var(--text);line-height:1.5;
       font-family:'DM Sans',system-ui,sans-serif;
     }
     .page{min-height:100vh;display:flex;flex-direction:column;
@@ -200,7 +200,7 @@ interface Empresa { nome: string; confirmadas: number }
         radial-gradient(1100px 520px at 50% -12%, rgba(70,185,129,.10), transparent 60%),
         radial-gradient(760px 480px at 92% 6%, rgba(201,169,110,.08), transparent 55%),
         var(--bg);}
-    .topbar{position:sticky;top:0;z-index:5;background:rgba(250,248,243,.82);
+    .topbar{position:sticky;top:0;z-index:5;background:rgba(10,10,10,.72);
       backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
     .topbar .inner{max-width:880px;margin:0 auto;padding:.8rem 1.25rem;display:flex;align-items:center;gap:.7rem}
     .mark{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;flex:none;
@@ -216,9 +216,9 @@ interface Empresa { nome: string; confirmadas: number }
     h1{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:clamp(2.1rem,6.5vw,3.4rem);
       line-height:1.04;letter-spacing:-.01em;margin:.1rem 0 .55rem}
     .lede{color:var(--muted);max-width:54ch;font-size:1.06rem;margin:0}
-    .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-      padding:1.3rem;margin:1.1rem 0;box-shadow:0 1px 2px rgba(25,52,40,.04),0 10px 30px rgba(25,52,40,.05)}
-    .card:hover{box-shadow:0 2px 4px rgba(25,52,40,.05),0 16px 38px rgba(25,52,40,.08)}
+    .card{background:linear-gradient(180deg,var(--surface),#111);border:1px solid var(--line);
+      border-radius:var(--radius);padding:1.3rem;margin:1.1rem 0;transition:border-color .15s}
+    .card:hover{border-color:var(--line-2)}
     h2{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:1.5rem;margin:0 0 .5rem}
     h3{font-size:.76rem;text-transform:uppercase;letter-spacing:.15em;color:var(--green-2);
       font-weight:600;margin:1.5rem 0 .7rem}
@@ -233,18 +233,18 @@ interface Empresa { nome: string; confirmadas: number }
     ul.needs.compact>li{padding:.5rem .7rem}
     .subcard{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:1rem;margin:.75rem 0}
     button,.btn{font:inherit;font-weight:600;cursor:pointer;border:0;border-radius:999px;
-      padding:.62rem 1.2rem;background:var(--green);color:#fff;transition:.15s;
+      padding:.62rem 1.2rem;background:var(--gold);color:#140e03;transition:.15s;
       display:inline-flex;align-items:center;gap:.4rem}
-    button:hover:not(:disabled){background:var(--green-2)}
+    button:hover:not(:disabled){background:var(--gold-2)}
     button:disabled{opacity:.5;cursor:not-allowed}
-    button.ghost{background:#fff;color:var(--text);border:1px solid var(--line-2)}
-    button.ghost:hover:not(:disabled){background:var(--surface-2)}
+    button.ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--line-2)}
+    button.ghost:hover:not(:disabled){background:rgba(255,255,255,.12)}
     .row-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin:.7rem 0}
     label{display:block;margin:.6rem 0;color:var(--muted);font-size:.9rem}
     input,textarea{display:block;width:100%;box-sizing:border-box;margin-top:.3rem;
-      background:#fff;color:var(--text);border:1px solid var(--line-2);border-radius:12px;
+      background:#0e0e0e;color:var(--text);border:1px solid var(--line-2);border-radius:12px;
       padding:.62rem .78rem;font:inherit}
-    input::placeholder{color:#9aa39d}
+    input::placeholder{color:#6f6a62}
     input:focus,textarea:focus{outline:0;border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
     textarea{min-height:92px;resize:vertical}
     fieldset{border:1px dashed var(--line-2);border-radius:12px;padding:.4rem .85rem .7rem;margin:.65rem 0}
@@ -267,7 +267,7 @@ interface Empresa { nome: string; confirmadas: number }
     ul.dir>li{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:.5rem .8rem;font-size:.95rem}
     li.empty{background:transparent;border:0;color:var(--muted);padding:.4rem 0}
     .codebox{font-family:ui-monospace,'Cascadia Code',monospace;word-break:break-all;
-      background:var(--surface-2);border:1px dashed var(--green);border-radius:12px;padding:.7rem .85rem;color:var(--green-2)}
+      background:#0e0e0e;border:1px dashed var(--green);border-radius:12px;padding:.7rem .85rem;color:var(--green-2)}
     details.accordion{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);margin:1.1rem 0;overflow:hidden}
     details.accordion>summary{cursor:pointer;padding:1rem 1.25rem;font-weight:600;list-style:none;display:flex;align-items:center}
     details.accordion>summary::-webkit-details-marker{display:none}
