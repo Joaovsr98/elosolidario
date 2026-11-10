@@ -22,6 +22,11 @@ interface Empresa { nome: string; confirmadas: number }
         <div class="inner">
           <span class="mark">E</span>
           <span class="brand">Elo Brasil Solidário<small>Rede de solidariedade</small></span>
+          <nav class="nav">
+            <a href="#empresas">Empresas</a>
+            <a href="#cadastrar">Cadastrar</a>
+            <a href="#painel">Painel</a>
+          </nav>
         </div>
       </header>
       <main>
@@ -31,6 +36,11 @@ interface Empresa { nome: string; confirmadas: number }
             <p class="eyebrow">Instituição · Brasil</p>
             <h1>{{ dados.instituicao }}</h1>
             <p class="lede">Conheça as campanhas abertas e registre sua intenção de doar. A entrega é combinada diretamente com a instituição.</p>
+            <div class="stats">
+              <div class="stat"><span class="num">{{ dados.campanhas.length }}</span><span class="lbl">Campanhas abertas</span></div>
+              <div class="stat"><span class="num">{{ itensAbertos() }}</span><span class="lbl">Itens buscados</span></div>
+              <div class="stat"><span class="num">{{ empresas().length }}</span><span class="lbl">Empresas doadoras</span></div>
+            </div>
           </section>
           @for (campanha of dados.campanhas; track campanha.id) {
             <article class="card">
@@ -52,7 +62,8 @@ interface Empresa { nome: string; confirmadas: number }
               }</ul>
             </article>
           } @empty { <p class="muted">Nenhuma campanha aberta.</p> }
-          <section class="card">
+          <section class="card" id="painel">
+            <p class="eyebrow">Área da instituição</p>
             <h2>Painel da instituição</h2>
             @if (doacoes(); as lista) {
               <div class="row-actions"><button class="ghost" [disabled]="ocupado()" (click)="sair()">Sair</button></div>
@@ -119,7 +130,7 @@ interface Empresa { nome: string; confirmadas: number }
             <p class="lede" role="status">{{ mensagem() }}</p>
           </section>
         }
-        <section class="card">
+        <section class="card" id="empresas">
           <h2>Empresas doadoras</h2>
           <h3>Top 10 do trimestre</h3>
           <ol class="rank">@for (empresa of ranking(); track empresa.nome) {
@@ -134,7 +145,7 @@ interface Empresa { nome: string; confirmadas: number }
             <li>{{ empresa.nome }}@if (empresa.confirmadas) { <span class="meta"> · {{ empresa.confirmadas }} confirmada(s)</span> }</li>
           } @empty { <li class="empty">Nenhuma empresa encontrada.</li> }</ul>
         </section>
-        <details class="accordion"><summary>Cadastrar minha instituição</summary>
+        <details class="accordion" id="cadastrar"><summary>Cadastrar minha instituição</summary>
           <div class="acc-body">
             <form #cad (submit)="$event.preventDefault(); cadastrar(cad)">
               <label>Nome da instituição <input name="nome" required maxlength="160"></label>
@@ -186,20 +197,20 @@ interface Empresa { nome: string; confirmadas: number }
   `,
   styles: [`
     :host{
-      --bg:#0a1324;--surface:#0f1d33;--surface-2:#152541;
+      --bg:#081020;--surface:#0e1b30;--surface-2:#13223b;
       --line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.16);
-      --text:#eef3fa;--muted:#9bb0c9;
-      --gold:#cfa968;--gold-2:#e6c78c;
-      --green:#7ea8e6;--green-2:#a9c7f2;--green-soft:rgba(126,168,230,.15);
-      --danger:#e68b82;--radius:18px;
+      --text:#eef4fb;--muted:#93a7c2;
+      --gold:#2bc4e6;--gold-2:#5fd4ef;
+      --green:#7dd3fc;--green-2:#a9e4fd;--green-soft:rgba(56,189,248,.14);
+      --amber:#d9a441;--danger:#e68b82;--radius:18px;
       display:block;color:var(--text);line-height:1.55;
       font-family:'DM Sans',system-ui,sans-serif;
     }
     @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
     .page{min-height:100vh;display:flex;flex-direction:column;
       background:
-        radial-gradient(1100px 560px at 50% -14%, rgba(126,168,230,.14), transparent 62%),
-        radial-gradient(780px 480px at 90% 4%, rgba(207,169,104,.08), transparent 55%),
+        radial-gradient(1100px 560px at 50% -14%, rgba(56,189,248,.16), transparent 62%),
+        radial-gradient(780px 480px at 90% 4%, rgba(43,196,230,.08), transparent 55%),
         var(--bg);}
     .topbar{position:sticky;top:0;z-index:5;background:rgba(10,19,36,.78);
       backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
@@ -210,6 +221,11 @@ interface Empresa { nome: string; confirmadas: number }
     .brand{font-weight:700;letter-spacing:.2px;line-height:1.1}
     .brand small{display:block;font-weight:500;font-size:.68rem;color:var(--muted);
       letter-spacing:.16em;text-transform:uppercase}
+    .nav{margin-left:auto;display:flex;gap:1.1rem;align-items:center}
+    .nav a{color:var(--muted);text-decoration:none;font-size:.9rem;font-weight:500;transition:color .15s}
+    .nav a:hover{color:var(--green-2)}
+    [id]{scroll-margin-top:74px}
+    @media (max-width:560px){ .nav{display:none} }
     main{width:100%;max-width:880px;margin:0 auto;padding:1rem 1.25rem 3.5rem;box-sizing:border-box;flex:1}
     .toast{margin:1rem 0;padding:.75rem 1rem;border-radius:12px;font-weight:500;
       background:var(--green-soft);border:1px solid rgba(70,185,129,.4);color:var(--green-2)}
@@ -218,6 +234,11 @@ interface Empresa { nome: string; confirmadas: number }
     h1{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:clamp(2.1rem,6.5vw,3.4rem);
       line-height:1.04;letter-spacing:-.01em;margin:.1rem 0 .55rem}
     .lede{color:var(--muted);max-width:54ch;font-size:1.06rem;margin:0}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin:1.5rem 0 .3rem}
+    .stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:.9rem 1rem;animation:rise .5s ease both}
+    .stat .num{display:block;font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.75rem;line-height:1;color:var(--green-2)}
+    .stat .lbl{display:block;margin-top:.35rem;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.09em}
+    @media (max-width:560px){ .stats{gap:.5rem} .stat{padding:.7rem .75rem} .stat .num{font-size:1.4rem} }
     .card{background:linear-gradient(180deg,var(--surface),#0c1829);border:1px solid var(--line);
       border-radius:var(--radius);padding:1.3rem;margin:1.1rem 0;
       transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;animation:rise .5s ease both}
@@ -236,9 +257,9 @@ interface Empresa { nome: string; confirmadas: number }
     ul.needs.compact>li{padding:.5rem .7rem}
     .subcard{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:1rem;margin:.75rem 0}
     button,.btn{font:inherit;font-weight:600;cursor:pointer;border:0;border-radius:999px;
-      padding:.62rem 1.2rem;background:var(--gold);color:#140e03;transition:.15s;
-      display:inline-flex;align-items:center;gap:.4rem}
-    button:hover:not(:disabled){background:var(--gold-2)}
+      padding:.62rem 1.2rem;background:linear-gradient(135deg,var(--gold),#1b9fd8);color:#04121d;transition:.15s;
+      display:inline-flex;align-items:center;gap:.4rem;box-shadow:0 6px 18px rgba(43,196,230,.2)}
+    button:hover:not(:disabled){filter:brightness(1.08)}
     button:disabled{opacity:.5;cursor:not-allowed}
     button.ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--line-2)}
     button.ghost:hover:not(:disabled){background:rgba(255,255,255,.12)}
@@ -253,11 +274,13 @@ interface Empresa { nome: string; confirmadas: number }
     fieldset{border:1px dashed var(--line-2);border-radius:12px;padding:.4rem .85rem .7rem;margin:.65rem 0}
     form{margin:.5rem 0}
     .search{display:flex;gap:.5rem;align-items:center}
-    .search input{flex:1;margin-top:0}
+    .search input{flex:1;margin-top:0;background-color:#0b1a30;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2393a7c2' stroke-width='2' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:.75rem center;padding-left:2.2rem}
     .search button{flex:none}
     .badge{display:inline-block;padding:.22rem .66rem;border-radius:999px;font-size:.76rem;font-weight:600}
     .badge.ok{background:var(--green-soft);color:var(--green-2)}
-    .badge.warn{background:rgba(201,169,110,.16);color:var(--gold-2)}
+    .badge.warn{background:rgba(217,164,65,.16);color:var(--amber)}
     .badge.off{background:rgba(224,119,107,.16);color:var(--danger)}
     ol.rank{list-style:none;counter-reset:r;padding:0;margin:.6rem 0;display:grid;gap:.5rem}
     ol.rank>li{counter-increment:r;display:flex;align-items:center;gap:.85rem;
@@ -297,6 +320,7 @@ class App {
   readonly campanhas = signal<CampanhaPainel[] | null>(null);
   readonly linhas = signal(1);
   readonly linhasArr = computed(() => Array.from({ length: this.linhas() }, (_, i) => i));
+  readonly itensAbertos = computed(() => (this.catalogo()?.campanhas ?? []).reduce((soma, c) => soma + c.itens.length, 0));
   readonly instituicoes = signal<InstAdmin[] | null>(null);
   readonly codigoGerado = signal('');
   readonly ranking = signal<RankItem[]>([]);
