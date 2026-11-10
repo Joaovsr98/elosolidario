@@ -1,9 +1,10 @@
 import { randomBytes } from 'node:crypto';
 import { sha256, matches, signature, originRejected, body } from './doacoes.mjs';
 
-const adminKey = process.env.ELO_ADMIN_KEY;
-if (adminKey !== undefined && !/^[a-f0-9]{64}$/.test(adminKey)) {
-  throw new Error('ELO_ADMIN_KEY inválida.');
+const adminRaw = typeof process.env.ELO_ADMIN_KEY === 'string' ? process.env.ELO_ADMIN_KEY.trim() : '';
+const adminKey = /^[a-f0-9]{64}$/.test(adminRaw) ? adminRaw : undefined;
+if (adminRaw && !adminKey) {
+  console.error('ELO_ADMIN_KEY ignorada: use 64 caracteres hexadecimais minúsculos. Administração desligada.');
 }
 
 function texto(valor, max) {
