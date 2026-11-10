@@ -22,7 +22,7 @@ interface Empresa { nome: string; confirmadas: number }
         <div class="inner">
           <span class="mark">E</span>
           <span class="brand">Elo Brasil Solidário<small>Rede de solidariedade</small></span>
-          <nav class="nav">
+          <nav class="nav" aria-label="Navegação principal">
             <a href="#empresas">Empresas</a>
             <a href="#cadastrar">Cadastrar</a>
             <a href="#painel">Painel</a>
@@ -78,6 +78,11 @@ interface Empresa { nome: string; confirmadas: number }
               <div class="stat"><span class="num">{{ empresas().length }}</span><span class="lbl">Empresas doadoras</span></div>
             </div>
           </section>
+          <div class="como">
+            <div class="passo"><span class="pn">1</span><div><strong>Escolha um item</strong><p class="meta">Veja as campanhas abertas e o que a instituição precisa.</p></div></div>
+            <div class="passo"><span class="pn">2</span><div><strong>Registre a intenção</strong><p class="meta">Informe nome, contato e quantidade — sem login.</p></div></div>
+            <div class="passo"><span class="pn">3</span><div><strong>Combine a entrega</strong><p class="meta">A instituição entra em contato e confirma o recebimento.</p></div></div>
+          </div>
           @for (campanha of dados.campanhas; track campanha.id) {
             <article class="card">
               <h2>{{ campanha.titulo }}</h2>
@@ -228,7 +233,16 @@ interface Empresa { nome: string; confirmadas: number }
           </div>
         </details>
       </main>
-      <footer>Elo Brasil Solidário · Projeto de extensão UNASP · InovaTec</footer>
+      <footer>
+        <div class="foot-inner">
+          <div><strong>Elo Brasil Solidário</strong><br><span class="meta">Projeto de extensão · UNASP · InovaTec</span></div>
+          <nav class="foot-nav" aria-label="Rodapé">
+            <a href="#empresas">Empresas</a>
+            <a href="#cadastrar">Cadastrar instituição</a>
+            <a href="#painel">Área da instituição</a>
+          </nav>
+        </div>
+      </footer>
     </div>
   `,
   styles: [`
@@ -274,6 +288,13 @@ interface Empresa { nome: string; confirmadas: number }
       background:linear-gradient(to top, rgba(8,16,32,.93) 12%, rgba(8,16,32,.35) 58%, transparent)}
     .banner-text .lede{max-width:48ch}
     @media (max-width:560px){ .banner{min-height:240px} .banner-text{padding:1.3rem 1.2rem 1.4rem} }
+    .como{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin:.4rem 0 .6rem}
+    .passo{display:flex;gap:.7rem;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1rem;animation:rise .5s ease both}
+    .passo .pn{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:9px;
+      background:var(--green-soft);color:var(--green-2);font-weight:700;font-family:'Fraunces',Georgia,serif}
+    .passo strong{display:block;margin-bottom:.15rem}
+    .passo .meta{margin:0}
+    @media (max-width:720px){ .como{grid-template-columns:1fr} }
     .eyebrow{font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;color:var(--green-2);font-weight:600;margin:0 0 .55rem}
     h1{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:clamp(2.1rem,6.5vw,3.4rem);
       line-height:1.04;letter-spacing:-.01em;margin:.1rem 0 .55rem}
@@ -350,9 +371,15 @@ interface Empresa { nome: string; confirmadas: number }
     details:not(.accordion)>summary::-webkit-details-marker{display:none}
     details:not(.accordion)>summary::before{content:'→ ';color:var(--green-2)}
     details:not(.accordion)[open]>summary::before{content:'↓ '}
-    footer{border-top:1px solid var(--line);color:var(--muted);font-size:.84rem;text-align:center;padding:1.6rem 1.25rem}
+    footer{border-top:1px solid var(--line);color:var(--muted);font-size:.86rem;padding:1.8rem 1.25rem;margin-top:1rem}
+    .foot-inner{max-width:880px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+    .foot-nav{display:flex;gap:1.1rem;flex-wrap:wrap}
+    .foot-nav a{color:var(--muted);text-decoration:none}
+    .foot-nav a:hover{color:var(--green-2)}
     @media (max-width:560px){ main{padding:1rem 1rem 3rem} .card{padding:1.1rem} }
-    @media (prefers-reduced-motion:reduce){ .card,.hero{animation:none} .card:hover{transform:none} }
+    a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,textarea:focus-visible{
+      outline:2px solid var(--green);outline-offset:2px}
+    @media (prefers-reduced-motion:reduce){ .card,.hero,.banner,.stat,.passo{animation:none} .card:hover{transform:none} }
   `]
 })
 class App {
@@ -526,7 +553,7 @@ class App {
     this.carregarEmpresas();
     void this.carregarPainel().catch(() => {});
     this.http.get<Catalogo>('/api/campanhas').subscribe({
-      next: dados => this.catalogo.set(dados),
+      next: dados => { this.catalogo.set(dados); document.title = dados.instituicao + ' · Elo Brasil Solidário'; },
       error: erro => this.mensagem.set(erro.status === 404
         ? 'Instituição indisponível neste endereço.' : 'Não foi possível carregar as campanhas.')
     });
