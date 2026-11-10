@@ -17,140 +17,272 @@ interface Empresa { nome: string; confirmadas: number }
 @Component({
   selector: 'elo-app',
   template: `
-    <main>
-      <p>Elo Brasil Solidário</p><p role="status">{{ retorno() }}</p>
-      @if (catalogo(); as dados) {
-        <h1>{{ dados.instituicao }}</h1>
-        @for (campanha of dados.campanhas; track campanha.id) {
-          <article>
-            <h2>{{ campanha.titulo }}</h2><p>{{ campanha.descricao }}</p>
-            <ul>@for (item of campanha.itens; track item.id) {
-              <li>{{ item.nome }} · Meta de {{ item.meta }} {{ item.unidade }}
-                <details><summary>Quero doar</summary>
-                  <form #form (submit)="$event.preventDefault(); doar(item.id, form)">
-                    <label>Nome <input name="nome" required maxlength="160"></label>
-                    <label>Contato <input name="contato" required maxlength="255"></label>
-                    <label>Empresa (se você representa uma) <input name="empresa" maxlength="160"></label>
-                    <label>Quantidade <input name="quantidade" type="number" min="1" max="1000000" required></label>
-                    <button [disabled]="ocupado()">Registrar intenção</button>
-                  </form>
-                </details>
-              </li>
-            }</ul>
-          </article>
-        } @empty { <p>Nenhuma campanha aberta.</p> }
-        <section>
-          <h2>Painel da instituição</h2>
-          @if (doacoes(); as lista) {
-            <button [disabled]="ocupado()" (click)="sair()">Sair</button>
-            <h3>Campanhas</h3>
-            @if (campanhas(); as cs) {
-              @for (c of cs; track c.id) {
-                <article>
-                  <h4>{{ c.titulo }}</h4><p>{{ c.descricao }}</p>
-                  <ul>@for (item of c.itens; track item.id) {
-                    <li>{{ item.nome }} · Meta de {{ item.meta }} {{ item.unidade }}</li>
-                  }</ul>
-                  <p>{{ c.encerrada ? 'Encerrada' : (c.publicada ? 'Publicada' : 'Rascunho') }}</p>
-                  @if (c.publicada && !c.encerrada) {
-                    <button [disabled]="ocupado()" (click)="encerrar(c.id)">Encerrar campanha</button>
-                  }
-                </article>
-              } @empty { <p>Nenhuma campanha cadastrada.</p> }
-            }
-            <details><summary>Nova campanha</summary>
-              <form #nova (submit)="$event.preventDefault(); criarCampanha(nova)">
-                <label>Título <input name="titulo" required maxlength="160"></label>
-                <label>Descrição <textarea name="descricao" required maxlength="2000"></textarea></label>
-                @for (linha of linhasArr(); track linha) {
-                  <fieldset>
-                    <label>Item <input name="item_nome" maxlength="160"></label>
-                    <label>Unidade <input name="item_unidade" maxlength="40"></label>
-                    <label>Meta <input name="item_meta" type="number" min="1" max="1000000"></label>
-                  </fieldset>
-                }
-                <button type="button" [disabled]="ocupado()" (click)="linhas.set(linhas() + 1)">Adicionar item</button>
-                <button [disabled]="ocupado()">Publicar campanha</button>
-              </form>
-            </details>
-            @for (doacao of lista; track doacao.id) {
-              <article>
-                <h3>{{ doacao.campanha }}</h3>
-                <p>{{ doacao.quantidade }} × {{ doacao.item }}</p>
-                <p>{{ doacao.nome }} · {{ doacao.contato }}</p>
-                @if (doacao.recebida) { <p>Recebida</p> }
-                @else {
-                  <button [disabled]="ocupado()" (click)="receber(doacao.id)">Confirmar recebimento</button>
-                }
-              </article>
-            } @empty { <p>Nenhuma intenção registrada.</p> }
-          } @else {
-            <form #login (submit)="$event.preventDefault(); entrar(login)">
-              <label>Código da instituição <input name="codigo" type="password" required autocomplete="current-password"></label>
-              <button [disabled]="ocupado()">Entrar</button>
-            </form>
-          }
-        </section>
-      } @else { <p role="status">{{ mensagem() }}</p> }
-      <section>
-        <h2>Empresas doadoras</h2>
-        <h3>Top 10 do trimestre</h3>
-        <ol>@for (empresa of ranking(); track empresa.nome) {
-          <li>{{ empresa.nome }} — {{ empresa.pontos }} confirmada(s)</li>
-        } @empty { <li>Ainda sem doações confirmadas neste trimestre.</li> }</ol>
-        <h3>Diretório</h3>
-        <form #busca (submit)="$event.preventDefault(); buscarEmpresas(busca)">
-          <label>Buscar empresa <input name="q" maxlength="160"></label>
-          <button>Buscar</button>
-        </form>
-        <ul>@for (empresa of empresas(); track empresa.nome) {
-          <li>{{ empresa.nome }}@if (empresa.confirmadas) { · {{ empresa.confirmadas }} confirmada(s)}</li>
-        } @empty { <li>Nenhuma empresa encontrada.</li> }</ul>
-      </section>
-      <details><summary>Cadastrar minha instituição</summary>
-        <form #cad (submit)="$event.preventDefault(); cadastrar(cad)">
-          <label>Nome da instituição <input name="nome" required maxlength="160"></label>
-          <label>Contato da instituição <input name="contato" maxlength="255"></label>
-          <label>Seu nome <input name="resp_nome" required maxlength="160"></label>
-          <label>Seu contato <input name="resp_contato" required maxlength="255"></label>
-          <button [disabled]="ocupado()">Enviar cadastro</button>
-        </form>
-      </details>
-      <details><summary>Administração</summary>
-        @if (instituicoes(); as insts) {
-          <button [disabled]="ocupado()" (click)="sairAdmin()">Sair da administração</button>
-          @if (codigoGerado(); as codigo) {
-            <p role="status">Código gerado (copie agora, aparece só uma vez): {{ codigo }}</p>
-          }
-          @for (i of insts; track i.id) {
-            <article>
-              <h3>{{ i.nome }}</h3>
-              <p>{{ i.aprovada ? ('Aprovada · ' + i.hostname) : 'Pendente' }}</p>
-              @if (i.contato) { <p>Contato: {{ i.contato }}</p> }
-              <ul>@for (r of i.responsaveis; track r.id) {
-                <li>{{ r.nome }} · {{ r.contato }}</li>
+    <div class="page">
+      <header class="topbar">
+        <div class="inner">
+          <span class="mark">◈</span>
+          <span class="brand">Elo Brasil Solidário<small>Rede de solidariedade</small></span>
+        </div>
+      </header>
+      <main>
+        @if (retorno()) { <p class="toast" role="status">{{ retorno() }}</p> }
+        @if (catalogo(); as dados) {
+          <section class="hero">
+            <p class="eyebrow">Instituição · Brasil</p>
+            <h1>{{ dados.instituicao }}</h1>
+            <p class="lede">Conheça as campanhas abertas e registre sua intenção de doar. A entrega é combinada diretamente com a instituição.</p>
+          </section>
+          @for (campanha of dados.campanhas; track campanha.id) {
+            <article class="card">
+              <h2>{{ campanha.titulo }}</h2>
+              <p class="muted">{{ campanha.descricao }}</p>
+              <ul class="needs">@for (item of campanha.itens; track item.id) {
+                <li>
+                  <div class="need-row"><strong>{{ item.nome }}</strong><span class="meta">Meta de {{ item.meta }} {{ item.unidade }}</span></div>
+                  <details><summary>Quero doar</summary>
+                    <form #form (submit)="$event.preventDefault(); doar(item.id, form)">
+                      <label>Nome <input name="nome" required maxlength="160"></label>
+                      <label>Contato <input name="contato" required maxlength="255"></label>
+                      <label>Empresa (se você representa uma) <input name="empresa" maxlength="160"></label>
+                      <label>Quantidade <input name="quantidade" type="number" min="1" max="1000000" required></label>
+                      <button [disabled]="ocupado()">Registrar intenção</button>
+                    </form>
+                  </details>
+                </li>
               }</ul>
-              @if (i.aprovada) {
-                <button [disabled]="ocupado()" (click)="regerar(i.id)">Gerar novo código</button>
-              } @else {
-                <form #ap (submit)="$event.preventDefault(); aprovar(i.id, ap)">
-                  <label>Domínio <input name="hostname" required maxlength="253" placeholder="nome.elo.vnbueno.com.br"></label>
-                  <button [disabled]="ocupado()">Aprovar e gerar código</button>
-                </form>
-              }
             </article>
-          } @empty { <p>Nenhuma instituição.</p> }
+          } @empty { <p class="muted">Nenhuma campanha aberta.</p> }
+          <section class="card">
+            <h2>Painel da instituição</h2>
+            @if (doacoes(); as lista) {
+              <div class="row-actions"><button class="ghost" [disabled]="ocupado()" (click)="sair()">Sair</button></div>
+              <h3>Campanhas</h3>
+              @if (campanhas(); as cs) {
+                @for (c of cs; track c.id) {
+                  <div class="subcard">
+                    <h4>{{ c.titulo }}</h4><p class="muted">{{ c.descricao }}</p>
+                    <ul class="needs compact">@for (item of c.itens; track item.id) {
+                      <li><strong>{{ item.nome }}</strong> <span class="meta">Meta de {{ item.meta }} {{ item.unidade }}</span></li>
+                    }</ul>
+                    <p>
+                      @if (c.encerrada) { <span class="badge off">Encerrada</span> }
+                      @else if (c.publicada) { <span class="badge ok">Publicada</span> }
+                      @else { <span class="badge warn">Rascunho</span> }
+                    </p>
+                    @if (c.publicada && !c.encerrada) {
+                      <button class="ghost" [disabled]="ocupado()" (click)="encerrar(c.id)">Encerrar campanha</button>
+                    }
+                  </div>
+                } @empty { <p class="muted">Nenhuma campanha cadastrada.</p> }
+              }
+              <details><summary>Nova campanha</summary>
+                <form #nova (submit)="$event.preventDefault(); criarCampanha(nova)">
+                  <label>Título <input name="titulo" required maxlength="160"></label>
+                  <label>Descrição <textarea name="descricao" required maxlength="2000"></textarea></label>
+                  @for (linha of linhasArr(); track linha) {
+                    <fieldset>
+                      <label>Item <input name="item_nome" maxlength="160"></label>
+                      <label>Unidade <input name="item_unidade" maxlength="40"></label>
+                      <label>Meta <input name="item_meta" type="number" min="1" max="1000000"></label>
+                    </fieldset>
+                  }
+                  <div class="row-actions">
+                    <button type="button" class="ghost" [disabled]="ocupado()" (click)="linhas.set(linhas() + 1)">Adicionar item</button>
+                    <button [disabled]="ocupado()">Publicar campanha</button>
+                  </div>
+                </form>
+              </details>
+              <h3>Intenções recebidas</h3>
+              @for (doacao of lista; track doacao.id) {
+                <div class="subcard">
+                  <div class="need-row"><strong>{{ doacao.campanha }}</strong>
+                    @if (doacao.recebida) { <span class="badge ok">Recebida</span> }
+                  </div>
+                  <p class="meta">{{ doacao.quantidade }} × {{ doacao.item }}</p>
+                  <p class="muted">{{ doacao.nome }} · {{ doacao.contato }}</p>
+                  @if (!doacao.recebida) {
+                    <button [disabled]="ocupado()" (click)="receber(doacao.id)">Confirmar recebimento</button>
+                  }
+                </div>
+              } @empty { <p class="muted">Nenhuma intenção registrada.</p> }
+            } @else {
+              <p class="muted">Acesse com o código da instituição para publicar campanhas e confirmar doações.</p>
+              <form #login (submit)="$event.preventDefault(); entrar(login)">
+                <label>Código da instituição <input name="codigo" type="password" required autocomplete="current-password"></label>
+                <button [disabled]="ocupado()">Entrar</button>
+              </form>
+            }
+          </section>
         } @else {
-          <form #adm (submit)="$event.preventDefault(); entrarAdmin(adm)">
-            <label>Chave de administrador <input name="codigo" type="password" required autocomplete="current-password"></label>
-            <button [disabled]="ocupado()">Entrar</button>
-          </form>
+          <section class="hero">
+            <p class="eyebrow">Elo Brasil Solidário</p>
+            <p class="lede" role="status">{{ mensagem() }}</p>
+          </section>
         }
-      </details>
-    </main>
+        <section class="card">
+          <h2>Empresas doadoras</h2>
+          <h3>Top 10 do trimestre</h3>
+          <ol class="rank">@for (empresa of ranking(); track empresa.nome) {
+            <li><span class="rank-name">{{ empresa.nome }}</span><span class="meta">{{ empresa.pontos }} confirmada(s)</span></li>
+          } @empty { <li class="empty">Ainda sem doações confirmadas neste trimestre.</li> }</ol>
+          <h3>Diretório</h3>
+          <form #busca class="search" (submit)="$event.preventDefault(); buscarEmpresas(busca)">
+            <input name="q" maxlength="160" placeholder="Buscar empresa">
+            <button class="ghost">Buscar</button>
+          </form>
+          <ul class="dir">@for (empresa of empresas(); track empresa.nome) {
+            <li>{{ empresa.nome }}@if (empresa.confirmadas) { <span class="meta"> · {{ empresa.confirmadas }} confirmada(s)</span> }</li>
+          } @empty { <li class="empty">Nenhuma empresa encontrada.</li> }</ul>
+        </section>
+        <details class="accordion"><summary>Cadastrar minha instituição</summary>
+          <div class="acc-body">
+            <form #cad (submit)="$event.preventDefault(); cadastrar(cad)">
+              <label>Nome da instituição <input name="nome" required maxlength="160"></label>
+              <label>Contato da instituição <input name="contato" maxlength="255"></label>
+              <label>Seu nome <input name="resp_nome" required maxlength="160"></label>
+              <label>Seu contato <input name="resp_contato" required maxlength="255"></label>
+              <button [disabled]="ocupado()">Enviar cadastro</button>
+            </form>
+          </div>
+        </details>
+        <details class="accordion"><summary>Administração</summary>
+          <div class="acc-body">
+            @if (instituicoes(); as insts) {
+              <div class="row-actions"><button class="ghost" [disabled]="ocupado()" (click)="sairAdmin()">Sair da administração</button></div>
+              @if (codigoGerado(); as codigo) {
+                <p class="codebox" role="status">Código gerado (copie agora, aparece só uma vez):<br>{{ codigo }}</p>
+              }
+              @for (i of insts; track i.id) {
+                <div class="subcard">
+                  <div class="need-row"><strong>{{ i.nome }}</strong>
+                    @if (i.aprovada) { <span class="badge ok">Aprovada</span> } @else { <span class="badge warn">Pendente</span> }
+                  </div>
+                  @if (i.aprovada) { <p class="meta">{{ i.hostname }}</p> }
+                  @if (i.contato) { <p class="muted">Contato: {{ i.contato }}</p> }
+                  <ul class="dir">@for (r of i.responsaveis; track r.id) {
+                    <li>{{ r.nome }} <span class="meta">· {{ r.contato }}</span></li>
+                  }</ul>
+                  @if (i.aprovada) {
+                    <button class="ghost" [disabled]="ocupado()" (click)="regerar(i.id)">Gerar novo código</button>
+                  } @else {
+                    <form #ap (submit)="$event.preventDefault(); aprovar(i.id, ap)">
+                      <label>Domínio <input name="hostname" required maxlength="253" placeholder="nome.elo.vnbueno.com.br"></label>
+                      <button [disabled]="ocupado()">Aprovar e gerar código</button>
+                    </form>
+                  }
+                </div>
+              } @empty { <p class="muted">Nenhuma instituição.</p> }
+            } @else {
+              <form #adm (submit)="$event.preventDefault(); entrarAdmin(adm)">
+                <label>Chave de administrador <input name="codigo" type="password" required autocomplete="current-password"></label>
+                <button [disabled]="ocupado()">Entrar</button>
+              </form>
+            }
+          </div>
+        </details>
+      </main>
+      <footer>Elo Brasil Solidário · Projeto de extensão UNASP · InovaTec</footer>
+    </div>
   `,
-  styles: [`main{max-width:760px;margin:auto;padding:2rem;font:1rem system-ui;color:#16372a}
-    article{border:1px solid #d4e5db;border-radius:1rem;padding:1rem;margin-block:1rem}`]
+  styles: [`
+    :host{
+      --bg:#faf8f3;--surface:#ffffff;--surface-2:#f4f1ea;
+      --line:rgba(25,52,40,.10);--line-2:rgba(25,52,40,.18);
+      --text:#1b2e25;--muted:#6a756e;
+      --green:#1f8a5b;--green-2:#15704a;--green-soft:rgba(31,138,91,.12);
+      --gold:#b9822f;--gold-2:#9c6c22;
+      --danger:#c0493b;--radius:18px;
+      display:block;color:var(--text);line-height:1.55;
+      font-family:'DM Sans',system-ui,sans-serif;
+    }
+    .page{min-height:100vh;display:flex;flex-direction:column;
+      background:
+        radial-gradient(1100px 520px at 50% -12%, rgba(70,185,129,.10), transparent 60%),
+        radial-gradient(760px 480px at 92% 6%, rgba(201,169,110,.08), transparent 55%),
+        var(--bg);}
+    .topbar{position:sticky;top:0;z-index:5;background:rgba(250,248,243,.82);
+      backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+    .topbar .inner{max-width:880px;margin:0 auto;padding:.8rem 1.25rem;display:flex;align-items:center;gap:.7rem}
+    .mark{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;flex:none;
+      background:linear-gradient(145deg,var(--green),#2b8c5f);color:#06130d;font-size:1rem}
+    .brand{font-weight:700;letter-spacing:.2px;line-height:1.1}
+    .brand small{display:block;font-weight:500;font-size:.68rem;color:var(--muted);
+      letter-spacing:.16em;text-transform:uppercase}
+    main{width:100%;max-width:880px;margin:0 auto;padding:1rem 1.25rem 3.5rem;box-sizing:border-box;flex:1}
+    .toast{margin:1rem 0;padding:.75rem 1rem;border-radius:12px;font-weight:500;
+      background:var(--green-soft);border:1px solid rgba(70,185,129,.4);color:var(--green-2)}
+    .hero{padding:2.4rem 0 1rem}
+    .eyebrow{font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;color:var(--green-2);font-weight:600;margin:0 0 .55rem}
+    h1{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:clamp(2.1rem,6.5vw,3.4rem);
+      line-height:1.04;letter-spacing:-.01em;margin:.1rem 0 .55rem}
+    .lede{color:var(--muted);max-width:54ch;font-size:1.06rem;margin:0}
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+      padding:1.3rem;margin:1.1rem 0;box-shadow:0 1px 2px rgba(25,52,40,.04),0 10px 30px rgba(25,52,40,.05)}
+    .card:hover{box-shadow:0 2px 4px rgba(25,52,40,.05),0 16px 38px rgba(25,52,40,.08)}
+    h2{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:1.5rem;margin:0 0 .5rem}
+    h3{font-size:.76rem;text-transform:uppercase;letter-spacing:.15em;color:var(--green-2);
+      font-weight:600;margin:1.5rem 0 .7rem}
+    h4{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:1.12rem;margin:0 0 .3rem}
+    p{margin:.35rem 0}
+    .muted{color:var(--muted)}
+    .meta{color:var(--muted);font-size:.9rem}
+    strong{font-weight:600}
+    .need-row{display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap}
+    ul.needs{list-style:none;padding:0;margin:.7rem 0;display:grid;gap:.6rem}
+    ul.needs>li{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:.8rem .9rem}
+    ul.needs.compact>li{padding:.5rem .7rem}
+    .subcard{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:1rem;margin:.75rem 0}
+    button,.btn{font:inherit;font-weight:600;cursor:pointer;border:0;border-radius:999px;
+      padding:.62rem 1.2rem;background:var(--green);color:#fff;transition:.15s;
+      display:inline-flex;align-items:center;gap:.4rem}
+    button:hover:not(:disabled){background:var(--green-2)}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    button.ghost{background:#fff;color:var(--text);border:1px solid var(--line-2)}
+    button.ghost:hover:not(:disabled){background:var(--surface-2)}
+    .row-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin:.7rem 0}
+    label{display:block;margin:.6rem 0;color:var(--muted);font-size:.9rem}
+    input,textarea{display:block;width:100%;box-sizing:border-box;margin-top:.3rem;
+      background:#fff;color:var(--text);border:1px solid var(--line-2);border-radius:12px;
+      padding:.62rem .78rem;font:inherit}
+    input::placeholder{color:#9aa39d}
+    input:focus,textarea:focus{outline:0;border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+    textarea{min-height:92px;resize:vertical}
+    fieldset{border:1px dashed var(--line-2);border-radius:12px;padding:.4rem .85rem .7rem;margin:.65rem 0}
+    form{margin:.5rem 0}
+    .search{display:flex;gap:.5rem;align-items:center}
+    .search input{flex:1;margin-top:0}
+    .search button{flex:none}
+    .badge{display:inline-block;padding:.22rem .66rem;border-radius:999px;font-size:.76rem;font-weight:600}
+    .badge.ok{background:var(--green-soft);color:var(--green-2)}
+    .badge.warn{background:rgba(201,169,110,.16);color:var(--gold-2)}
+    .badge.off{background:rgba(224,119,107,.16);color:var(--danger)}
+    ol.rank{list-style:none;counter-reset:r;padding:0;margin:.6rem 0;display:grid;gap:.5rem}
+    ol.rank>li{counter-increment:r;display:flex;align-items:center;gap:.85rem;
+      background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:.65rem .85rem}
+    ol.rank>li::before{content:counter(r);display:grid;place-items:center;width:28px;height:28px;flex:none;
+      border-radius:8px;background:var(--green-soft);color:var(--green-2);font-weight:700;font-size:.85rem}
+    ol.rank>li.empty::before{display:none}
+    .rank-name{flex:1;font-weight:500}
+    ul.dir{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:.4rem}
+    ul.dir>li{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:.5rem .8rem;font-size:.95rem}
+    li.empty{background:transparent;border:0;color:var(--muted);padding:.4rem 0}
+    .codebox{font-family:ui-monospace,'Cascadia Code',monospace;word-break:break-all;
+      background:var(--surface-2);border:1px dashed var(--green);border-radius:12px;padding:.7rem .85rem;color:var(--green-2)}
+    details.accordion{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);margin:1.1rem 0;overflow:hidden}
+    details.accordion>summary{cursor:pointer;padding:1rem 1.25rem;font-weight:600;list-style:none;display:flex;align-items:center}
+    details.accordion>summary::-webkit-details-marker{display:none}
+    details.accordion>summary::after{content:'+';margin-left:auto;color:var(--green-2);font-weight:700;font-size:1.15rem}
+    details.accordion[open]>summary::after{content:'–'}
+    details.accordion[open]>summary{border-bottom:1px solid var(--line)}
+    .acc-body{padding:1.1rem 1.25rem}
+    details:not(.accordion){margin:.5rem 0}
+    details:not(.accordion)>summary{cursor:pointer;list-style:none;color:var(--green-2);font-weight:600;padding:.35rem 0}
+    details:not(.accordion)>summary::-webkit-details-marker{display:none}
+    details:not(.accordion)>summary::before{content:'→ ';color:var(--green-2)}
+    details:not(.accordion)[open]>summary::before{content:'↓ '}
+    footer{border-top:1px solid var(--line);color:var(--muted);font-size:.84rem;text-align:center;padding:1.6rem 1.25rem}
+    @media (max-width:560px){ main{padding:1rem 1rem 3rem} .card{padding:1.1rem} }
+  `]
 })
 class App {
   readonly catalogo = signal<Catalogo | null>(null);
