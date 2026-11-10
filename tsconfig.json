@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "preserve",
+    "strict": true,
+    "experimentalDecorators": true,
+    "skipLibCheck": true
+  },
+  "files": [
+    "frontend/main.ts"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "projects": {
+    "elo": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "frontend",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "frontend/main.ts",
+            "index": "frontend/index.html",
+            "tsConfig": "tsconfig.json",
+            "outputPath": "dist/elo"
+          }
+        }
+      }
+    }
+  }
+}

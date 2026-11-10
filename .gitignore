@@ -1,3 +1,6 @@
 elo-demo.sqlite*
 .env
 .env.local
+node_modules/
+dist/
+.angular/
