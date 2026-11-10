@@ -33,9 +33,45 @@ interface Empresa { nome: string; confirmadas: number }
         @if (retorno()) { <p class="toast" role="status">{{ retorno() }}</p> }
         @if (catalogo(); as dados) {
           <section class="hero">
-            <p class="eyebrow">Instituição · Brasil</p>
-            <h1>{{ dados.instituicao }}</h1>
-            <p class="lede">Conheça as campanhas abertas e registre sua intenção de doar. A entrega é combinada diretamente com a instituição.</p>
+            <div class="banner">
+              <svg class="banner-art" viewBox="0 0 800 360" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <defs>
+                  <radialGradient id="bg" cx="28%" cy="26%" r="90%">
+                    <stop offset="0%" stop-color="#16324f"/><stop offset="100%" stop-color="#091525"/>
+                  </radialGradient>
+                  <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+                    <feGaussianBlur stdDeviation="5" result="b"/>
+                    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
+                <rect width="800" height="360" fill="url(#bg)"/>
+                <g stroke="#38bdf8" stroke-opacity="0.22" stroke-width="1.2">
+                  <line x1="120" y1="90" x2="210" y2="160"/><line x1="210" y1="160" x2="90" y2="240"/>
+                  <line x1="210" y1="160" x2="340" y2="180"/><line x1="260" y1="70" x2="340" y2="180"/>
+                  <line x1="340" y1="180" x2="430" y2="110"/><line x1="340" y1="180" x2="300" y2="280"/>
+                  <line x1="430" y1="110" x2="470" y2="240"/><line x1="470" y1="240" x2="560" y2="160"/>
+                  <line x1="560" y1="160" x2="640" y2="90"/><line x1="560" y1="160" x2="700" y2="210"/>
+                  <line x1="700" y1="210" x2="660" y2="310"/><line x1="470" y1="240" x2="540" y2="300"/>
+                  <line x1="640" y1="90" x2="730" y2="120"/><line x1="90" y1="240" x2="200" y2="320"/>
+                  <line x1="300" y1="280" x2="380" y2="320"/><line x1="430" y1="110" x2="640" y2="90"/>
+                </g>
+                <g fill="#7dd3fc" fill-opacity="0.9">
+                  <circle cx="120" cy="90" r="4"/><circle cx="210" cy="160" r="4"/><circle cx="260" cy="70" r="3"/>
+                  <circle cx="300" cy="280" r="4"/><circle cx="430" cy="110" r="4"/><circle cx="560" cy="160" r="4"/>
+                  <circle cx="540" cy="300" r="3"/><circle cx="700" cy="210" r="5"/><circle cx="660" cy="310" r="4"/>
+                  <circle cx="730" cy="120" r="3"/><circle cx="200" cy="320" r="4"/><circle cx="380" cy="320" r="3"/>
+                </g>
+                <g fill="#67e8f9" filter="url(#glow)">
+                  <circle cx="90" cy="240" r="6"/><circle cx="340" cy="180" r="7"/>
+                  <circle cx="470" cy="240" r="6"/><circle cx="640" cy="90" r="6"/>
+                </g>
+              </svg>
+              <div class="banner-text">
+                <p class="eyebrow">Instituição · Brasil</p>
+                <h1>{{ dados.instituicao }}</h1>
+                <p class="lede">Conheça as campanhas abertas e registre sua intenção de doar. A entrega é combinada diretamente com a instituição.</p>
+              </div>
+            </div>
             <div class="stats">
               <div class="stat"><span class="num">{{ dados.campanhas.length }}</span><span class="lbl">Campanhas abertas</span></div>
               <div class="stat"><span class="num">{{ itensAbertos() }}</span><span class="lbl">Itens buscados</span></div>
@@ -229,7 +265,15 @@ interface Empresa { nome: string; confirmadas: number }
     main{width:100%;max-width:880px;margin:0 auto;padding:1rem 1.25rem 3.5rem;box-sizing:border-box;flex:1}
     .toast{margin:1rem 0;padding:.75rem 1rem;border-radius:12px;font-weight:500;
       background:var(--green-soft);border:1px solid rgba(70,185,129,.4);color:var(--green-2)}
-    .hero{padding:2.4rem 0 1rem;animation:rise .55s ease both}
+    .hero{padding:1.8rem 0 .5rem}
+    .banner{position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--line);
+      min-height:300px;display:flex;align-items:flex-end;animation:rise .55s ease both;
+      box-shadow:0 22px 50px rgba(0,0,0,.4)}
+    .banner-art{position:absolute;inset:0;width:100%;height:100%}
+    .banner-text{position:relative;width:100%;padding:1.7rem 1.7rem 1.9rem;box-sizing:border-box;
+      background:linear-gradient(to top, rgba(8,16,32,.93) 12%, rgba(8,16,32,.35) 58%, transparent)}
+    .banner-text .lede{max-width:48ch}
+    @media (max-width:560px){ .banner{min-height:240px} .banner-text{padding:1.3rem 1.2rem 1.4rem} }
     .eyebrow{font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;color:var(--green-2);font-weight:600;margin:0 0 .55rem}
     h1{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:clamp(2.1rem,6.5vw,3.4rem);
       line-height:1.04;letter-spacing:-.01em;margin:.1rem 0 .55rem}
