@@ -30,7 +30,7 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
         </div>
       </header>
       <main>
-        @if (retorno()) { <p class="toast" role="status">{{ retorno() }}</p> }
+        @if (retorno()) { <p class="toast" [class.erro]="retornoErro()" role="status">{{ retorno() }}</p> }
         @if (catalogo(); as dados) {
           <section class="hero">
             <div class="banner">
@@ -186,7 +186,7 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
         }
         <section class="card" id="empresas">
           <h2>Empresas doadoras</h2>
-          <h3>Top 10 do trimestre</h3>
+          <h3>Top 10 do trimestre · {{ trimestreLabel() }}</h3>
           <ol class="rank">@for (empresa of ranking(); track empresa.nome) {
             <li><span class="rank-name">{{ empresa.nome }}</span><span class="meta">{{ empresa.pontos }} confirmada(s)</span></li>
           } @empty { <li class="empty">Ainda sem doações confirmadas neste trimestre.</li> }</ol>
@@ -298,7 +298,8 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
     }
     main{width:100%;max-width:880px;margin:0 auto;padding:1rem 1.25rem 3.5rem;box-sizing:border-box;flex:1}
     .toast{margin:1rem 0;padding:.75rem 1rem;border-radius:12px;font-weight:500;
-      background:var(--green-soft);border:1px solid rgba(70,185,129,.4);color:var(--green-2)}
+      background:var(--green-soft);border:1px solid rgba(56,189,248,.4);color:var(--green-2)}
+    .toast.erro{background:rgba(224,119,107,.14);border-color:rgba(224,119,107,.45);color:var(--danger)}
     .hero{padding:1.8rem 0 .5rem}
     .banner{position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--line);
       min-height:300px;display:flex;align-items:flex-end;animation:rise .55s ease both;
@@ -425,7 +426,13 @@ class App {
   readonly ranking = signal<RankItem[]>([]);
   readonly empresas = signal<Empresa[]>([]);
   readonly retorno = signal('');
+  readonly retornoErro = signal(false);
   readonly ocupado = signal(false);
+  readonly trimestreLabel = computed(() => {
+    const d = new Date();
+    const periodo = [['jan', 'mar'], ['abr', 'jun'], ['jul', 'set'], ['out', 'dez']][Math.floor(d.getMonth() / 3)];
+    return periodo[0] + '–' + periodo[1] + ' ' + d.getFullYear();
+  });
 
   doar(item: number, form: HTMLFormElement) {
     const dados = new FormData(form);
@@ -536,6 +543,7 @@ class App {
     const codigo = new FormData(form).get('codigo');
     this.ocupado.set(true);
     this.retorno.set('');
+    this.retornoErro.set(false);
     void firstValueFrom(this.http.post('/api/admin/entrar', { codigo }))
       .then(() => { form.reset(); return this.carregarAdmin(); })
       .catch((erro: unknown) => this.tratarErro(erro))
@@ -561,6 +569,7 @@ class App {
   private async acaoCodigo(path: string, dados: object, msg: string) {
     this.ocupado.set(true);
     this.retorno.set('');
+    this.retornoErro.set(false);
     this.codigoGerado.set('');
     try {
       const resposta = await firstValueFrom(this.http.post<{ codigo: string }>(path, dados));
@@ -576,6 +585,7 @@ class App {
   }
 
   private tratarErro(erro: unknown) {
+    this.retornoErro.set(true);
     this.retorno.set(erro instanceof HttpErrorResponse && typeof erro.error?.erro === 'string'
       ? erro.error.erro : 'Não foi possível concluir a solicitação.');
   }
@@ -583,6 +593,7 @@ class App {
   private async acao(path: string, dados: object, sucesso: () => Promise<void>) {
     this.ocupado.set(true);
     this.retorno.set('');
+    this.retornoErro.set(false);
     try {
       await firstValueFrom(this.http.post(path, dados));
       await sucesso();
