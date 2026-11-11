@@ -115,7 +115,10 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
                   <div class="subcard">
                     <h4>{{ c.titulo }}</h4><p class="muted">{{ c.descricao }}</p>
                     <ul class="needs compact">@for (item of c.itens; track item.id) {
-                      <li><strong>{{ item.nome }}</strong> <span class="meta">Meta de {{ item.meta }} {{ item.unidade }}</span></li>
+                      <li>
+                        <div class="need-row"><strong>{{ item.nome }}</strong><span class="meta">{{ item.recebido || 0 }} de {{ item.meta }} {{ item.unidade }}</span></div>
+                        <div class="bar"><span [style.width.%]="pct(item)"></span></div>
+                      </li>
                     }</ul>
                     <p>
                       @if (c.encerrada) { <span class="badge off">Encerrada</span> }
@@ -187,9 +190,10 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
           <ol class="rank">@for (empresa of ranking(); track empresa.nome) {
             <li><span class="rank-name">{{ empresa.nome }}</span><span class="meta">{{ empresa.pontos }} confirmada(s)</span></li>
           } @empty { <li class="empty">Ainda sem doações confirmadas neste trimestre.</li> }</ol>
-          <h3>Diretório</h3>
+          <h3>Mural de Empresas Solidárias</h3>
+          <p class="meta">Todas as empresas que já doaram, com seus selos de reconhecimento. Busque pelo nome:</p>
           <form #busca class="search" (submit)="$event.preventDefault(); buscarEmpresas(busca)">
-            <input name="q" maxlength="160" placeholder="Buscar empresa">
+            <input name="q" maxlength="160" placeholder="Buscar empresa" aria-label="Buscar empresa">
             <button class="ghost">Buscar</button>
           </form>
           <ul class="dir">@for (empresa of empresas(); track empresa.nome) {
@@ -287,7 +291,11 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
     .nav a{color:var(--muted);text-decoration:none;font-size:.9rem;font-weight:500;transition:color .15s}
     .nav a:hover{color:var(--green-2)}
     [id]{scroll-margin-top:74px}
-    @media (max-width:560px){ .nav{display:none} }
+    @media (max-width:560px){
+      .topbar .inner{flex-wrap:wrap}
+      .nav{margin-left:0;width:100%;gap:1.2rem;font-size:.9rem}
+      .brand small{display:none}
+    }
     main{width:100%;max-width:880px;margin:0 auto;padding:1rem 1.25rem 3.5rem;box-sizing:border-box;flex:1}
     .toast{margin:1rem 0;padding:.75rem 1rem;border-radius:12px;font-weight:500;
       background:var(--green-soft);border:1px solid rgba(70,185,129,.4);color:var(--green-2)}

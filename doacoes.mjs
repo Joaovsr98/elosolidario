@@ -201,7 +201,9 @@ export async function donations(req, res, db, json, path, host, instituicao) {
       SELECT c.id, c.titulo, c.descricao,
              c.publicada_em IS NOT NULL AS publicada,
              (c.encerrada_em IS NOT NULL AND c.encerrada_em <= UTC_TIMESTAMP(6)) AS encerrada,
-             n.id AS item_id, n.nome, n.unidade, n.quantidade_meta AS meta
+             n.id AS item_id, n.nome, n.unidade, n.quantidade_meta AS meta,
+             COALESCE((SELECT SUM(d.quantidade_oferecida) FROM intencao_doacao d
+                       WHERE d.necessidade_id = n.id AND d.recebida_em IS NOT NULL), 0) AS recebido
       FROM campanha c LEFT JOIN necessidade n ON n.campanha_id = c.id
       WHERE c.instituicao_id = ? ORDER BY c.id DESC, n.id
     `, [institution]);
@@ -212,7 +214,7 @@ export async function donations(req, res, db, json, path, host, instituicao) {
         publicada: !!row.publicada, encerrada: !!row.encerrada, itens: []
       });
       if (row.item_id !== null) campanhas.get(row.id).itens.push({
-        id: row.item_id, nome: row.nome, unidade: row.unidade, meta: row.meta
+        id: row.item_id, nome: row.nome, unidade: row.unidade, meta: row.meta, recebido: Number(row.recebido)
       });
     }
     return json(res, 200, [...campanhas.values()]);
