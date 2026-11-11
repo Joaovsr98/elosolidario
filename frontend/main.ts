@@ -97,6 +97,7 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
                       <label>Contato <input name="contato" required maxlength="255"></label>
                       <label>Empresa (se você representa uma) <input name="empresa" maxlength="160"></label>
                       <label>Quantidade <input name="quantidade" type="number" min="1" max="1000000" required></label>
+                      <label class="check"><input type="checkbox" name="consentimento" required> Concordo com o uso do meu nome e contato para intermediar esta doação (LGPD).</label>
                       <button [disabled]="ocupado()">Registrar intenção</button>
                     </form>
                   </details>
@@ -209,6 +210,7 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
               <label>Contato da instituição <input name="contato" maxlength="255"></label>
               <label>Seu nome <input name="resp_nome" required maxlength="160"></label>
               <label>Seu contato <input name="resp_contato" required maxlength="255"></label>
+              <label class="check"><input type="checkbox" name="consentimento" required> Concordo com o uso dos dados informados para avaliar e entrar em contato sobre o cadastro (LGPD).</label>
               <button [disabled]="ocupado()">Enviar cadastro</button>
             </form>
           </div>
@@ -438,7 +440,8 @@ class App {
     const dados = new FormData(form);
     void this.acao('/api/doacoes', {
       item, nome: dados.get('nome'), contato: dados.get('contato'),
-      empresa: dados.get('empresa'), quantidade: Number(dados.get('quantidade'))
+      empresa: dados.get('empresa'), quantidade: Number(dados.get('quantidade')),
+      consentimento: dados.get('consentimento') != null
     }, async () => {
       form.reset();
       this.retorno.set('Intenção registrada. A instituição poderá entrar em contato.');
@@ -532,7 +535,8 @@ class App {
     const dados = new FormData(form);
     void this.acao('/api/cadastro', {
       nome: dados.get('nome'), contato: dados.get('contato'),
-      responsavel: { nome: dados.get('resp_nome'), contato: dados.get('resp_contato') }
+      responsavel: { nome: dados.get('resp_nome'), contato: dados.get('resp_contato') },
+      consentimento: dados.get('consentimento') != null
     }, async () => {
       form.reset();
       this.retorno.set('Cadastro enviado. A plataforma vai avaliar e entrar em contato.');

@@ -28,6 +28,7 @@ export async function cadastro(req, res, db, json) {
   if (!nome || !respNome || !respContato || contato === null) {
     return reject(400, 'Confira os dados do cadastro.');
   }
+  if (data.consentimento !== true) return reject(400, 'É necessário concordar com o uso dos dados (LGPD).');
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();

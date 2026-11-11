@@ -9,9 +9,19 @@ if (!process.env.MYSQL_URL) throw new Error('Configure MYSQL_URL.');
 const db = createPool(process.env.MYSQL_URL);
 const mime = new Map([['.html', 'text/html; charset=utf-8'], ['.js', 'text/javascript; charset=utf-8'],
   ['.css', 'text/css; charset=utf-8']]);
+const SECURITY = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'no-referrer',
+  'Permissions-Policy': 'geolocation=(), camera=(), microphone=()',
+  'Strict-Transport-Security': 'max-age=31536000'
+};
+const CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+  + "font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; "
+  + "frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 
 function json(res, status, data) {
-  res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+  res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...SECURITY });
   res.end(JSON.stringify(data));
 }
 
@@ -57,7 +67,7 @@ createServer(async (req, res) => {
     const type = /^\/[a-zA-Z0-9_.-]+\.(html|js|css)$/.test(asset) && mime.get(asset.slice(asset.lastIndexOf('.')));
     if (!type) return json(res, 404, { erro: 'Página indisponível' });
     const content = await readFile(new URL('./dist/elo/browser' + asset, import.meta.url));
-    res.writeHead(200, { 'Content-Type': type, 'X-Content-Type-Options': 'nosniff' });
+    res.writeHead(200, { 'Content-Type': type, ...SECURITY, 'Content-Security-Policy': CSP });
     res.end(content);
   } catch (error) {
     if (error.code === 'ENOENT') return json(res, 404, { erro: 'Arquivo indisponível' });

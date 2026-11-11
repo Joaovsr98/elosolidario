@@ -67,6 +67,7 @@ export async function donations(req, res, db, json, path, host, instituicao) {
       const nome = typeof data.nome === 'string' ? data.nome.trim() : '';
       const contato = typeof data.contato === 'string' ? data.contato.trim() : '';
       const empresaNome = typeof data.empresa === 'string' ? data.empresa.trim() : '';
+      if (data.consentimento !== true) return reject(400, 'É necessário concordar com o uso dos dados (LGPD).');
       if (!nome || nome.length > 160 || !contato || contato.length > 255 || empresaNome.length > 160
         || !Number.isSafeInteger(data.item) || data.item < 1
         || !Number.isSafeInteger(data.quantidade) || data.quantidade < 1 || data.quantidade > 1000000) {
