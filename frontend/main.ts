@@ -179,6 +179,18 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
               </form>
             }
           </section>
+        } @else if (carregandoCatalogo()) {
+          <section class="hero">
+            <div class="skel sk-banner"></div>
+            <div class="stats">
+              <div class="skel sk-stat"></div><div class="skel sk-stat"></div><div class="skel sk-stat"></div>
+            </div>
+          </section>
+          <article class="card">
+            <div class="skel sk-line sk-line-lg"></div>
+            <div class="skel sk-line"></div>
+            <div class="subcard"><div class="skel sk-line"></div><div class="skel sk-row"></div></div>
+          </article>
         } @else {
           <section class="hero">
             <p class="eyebrow">Elo Brasil Solidário</p>
@@ -188,20 +200,28 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
         <section class="card" id="empresas">
           <h2>Empresas doadoras</h2>
           <h3>Top 10 do trimestre · {{ trimestreLabel() }}</h3>
-          <ol class="rank">@for (empresa of ranking(); track empresa.nome) {
-            <li><span class="rank-name">{{ empresa.nome }}</span><span class="meta">{{ empresa.pontos }} confirmada(s)</span></li>
-          } @empty { <li class="empty">Ainda sem doações confirmadas neste trimestre.</li> }</ol>
+          @if (carregandoEmpresas()) {
+            <div class="skel sk-row"></div><div class="skel sk-row"></div>
+          } @else {
+            <ol class="rank">@for (empresa of ranking(); track empresa.nome) {
+              <li><span class="rank-name">{{ empresa.nome }}</span><span class="meta">{{ empresa.pontos }} confirmada(s)</span></li>
+            } @empty { <li class="empty">Ainda sem doações confirmadas neste trimestre.</li> }</ol>
+          }
           <h3>Mural de Empresas Solidárias</h3>
           <p class="meta">Todas as empresas que já doaram, com seus selos de reconhecimento. Busque pelo nome:</p>
           <form #busca class="search" (submit)="$event.preventDefault(); buscarEmpresas(busca)">
             <input name="q" maxlength="160" placeholder="Buscar empresa" aria-label="Buscar empresa">
             <button class="ghost">Buscar</button>
           </form>
-          <ul class="dir">@for (empresa of empresas(); track empresa.nome) {
-            <li><strong>{{ empresa.nome }}</strong>@if (empresa.confirmadas) { <span class="meta"> · {{ empresa.confirmadas }} confirmada(s)</span> }
-              @if (empresa.selos.length) { <span class="selos">@for (s of empresa.selos; track s) { <span class="selo">{{ s }}</span> }</span> }
-            </li>
-          } @empty { <li class="empty">Nenhuma empresa encontrada.</li> }</ul>
+          @if (carregandoEmpresas()) {
+            <div class="skel sk-row"></div><div class="skel sk-row"></div>
+          } @else {
+            <ul class="dir">@for (empresa of empresas(); track empresa.nome) {
+              <li><strong>{{ empresa.nome }}</strong>@if (empresa.confirmadas) { <span class="meta"> · {{ empresa.confirmadas }} confirmada(s)</span> }
+                @if (empresa.selos.length) { <span class="selos">@for (s of empresa.selos; track s) { <span class="selo">{{ s }}</span> }</span> }
+              </li>
+            } @empty { <li class="empty">Nenhuma empresa encontrada.</li> }</ul>
+          }
         </section>
         <details class="accordion" id="cadastrar"><summary>Cadastrar minha instituição</summary>
           <div class="acc-body">
@@ -386,6 +406,15 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
     .bar>span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#1b9fd8,var(--gold));transition:width .5s ease}
     .selos{display:inline-flex;gap:.35rem;flex-wrap:wrap;margin-top:.35rem}
     .selo{font-size:.7rem;font-weight:600;padding:.14rem .55rem;border-radius:999px;background:var(--green-soft);color:var(--green-2)}
+    .skel{position:relative;overflow:hidden;background:var(--surface-2);border:1px solid var(--line);border-radius:12px}
+    .skel::after{content:'';position:absolute;inset:0;transform:translateX(-100%);
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);animation:shimmer 1.3s infinite}
+    @keyframes shimmer{100%{transform:translateX(100%)}}
+    .sk-banner{height:300px;border-radius:22px;margin-top:.4rem}
+    .sk-stat{height:88px}
+    .sk-line{height:16px;margin:.7rem 0}
+    .sk-line-lg{height:30px;width:55%}
+    .sk-row{height:46px;margin:.5rem 0}
     .codebox{font-family:ui-monospace,'Cascadia Code',monospace;word-break:break-all;
       background:#16273f;border:1px dashed var(--gold);border-radius:12px;padding:.7rem .85rem;color:var(--gold-2)}
     details.accordion{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);margin:1.1rem 0;overflow:hidden}
@@ -408,7 +437,7 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
     @media (max-width:560px){ main{padding:1rem 1rem 3rem} .card{padding:1.1rem} }
     a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,textarea:focus-visible{
       outline:2px solid var(--green);outline-offset:2px}
-    @media (prefers-reduced-motion:reduce){ .card,.hero,.banner,.stat,.passo{animation:none} .card:hover{transform:none} }
+    @media (prefers-reduced-motion:reduce){ .card,.hero,.banner,.stat,.passo{animation:none} .card:hover{transform:none} .skel::after{animation:none} }
   `]
 })
 class App {
@@ -427,6 +456,8 @@ class App {
   readonly codigoGerado = signal('');
   readonly ranking = signal<RankItem[]>([]);
   readonly empresas = signal<Empresa[]>([]);
+  readonly carregandoCatalogo = signal(true);
+  readonly carregandoEmpresas = signal(true);
   readonly retorno = signal('');
   readonly retornoErro = signal(false);
   readonly ocupado = signal(false);
@@ -528,7 +559,10 @@ class App {
 
   private carregarEmpresas() {
     this.http.get<RankItem[]>('/api/ranking').subscribe({ next: dados => this.ranking.set(dados), error: () => {} });
-    this.http.get<Empresa[]>('/api/empresas').subscribe({ next: dados => this.empresas.set(dados), error: () => {} });
+    this.http.get<Empresa[]>('/api/empresas').subscribe({
+      next: dados => { this.empresas.set(dados); this.carregandoEmpresas.set(false); },
+      error: () => this.carregandoEmpresas.set(false)
+    });
   }
 
   cadastrar(form: HTMLFormElement) {
@@ -613,9 +647,9 @@ class App {
     this.carregarEmpresas();
     void this.carregarPainel().catch(() => {});
     this.http.get<Catalogo>('/api/campanhas').subscribe({
-      next: dados => { this.catalogo.set(dados); document.title = dados.instituicao + ' · Elo Brasil Solidário'; },
-      error: erro => this.mensagem.set(erro.status === 404
-        ? 'Instituição indisponível neste endereço.' : 'Não foi possível carregar as campanhas.')
+      next: dados => { this.catalogo.set(dados); this.carregandoCatalogo.set(false); document.title = dados.instituicao + ' · Elo Brasil Solidário'; },
+      error: erro => { this.carregandoCatalogo.set(false); this.mensagem.set(erro.status === 404
+        ? 'Instituição indisponível neste endereço.' : 'Não foi possível carregar as campanhas.'); }
     });
   }
 }
