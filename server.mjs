@@ -20,6 +20,36 @@ const CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inl
   + "font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; "
   + "frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 
+// Limite de tentativas por IP (best-effort, em memória) contra força bruta e spam.
+const REGRAS = {
+  '/api/painel/entrar': [10, 15 * 60_000],
+  '/api/admin/entrar': [10, 15 * 60_000],
+  '/api/cadastro': [5, 60 * 60_000],
+  '/api/doacoes': [20, 60 * 60_000]
+};
+const tentativas = new Map();
+
+function excedeuLimite(req, path) {
+  const regra = req.method === 'POST' && REGRAS[path];
+  if (!regra) return 0;
+  const encaminhado = String(req.headers['x-forwarded-for'] ?? '').split(',').map(s => s.trim()).filter(Boolean);
+  const chave = path + '|' + (encaminhado.at(-1) ?? req.socket.remoteAddress ?? '?');
+  const agora = Date.now();
+  const atual = tentativas.get(chave);
+  if (!atual || atual.reset <= agora) {
+    if (tentativas.size > 50_000) tentativas.clear();
+    tentativas.set(chave, { total: 1, reset: agora + regra[1] });
+    return 0;
+  }
+  atual.total += 1;
+  return atual.total > regra[0] ? Math.ceil((atual.reset - agora) / 1000) : 0;
+}
+
+setInterval(() => {
+  const agora = Date.now();
+  for (const [chave, valor] of tentativas) if (valor.reset <= agora) tentativas.delete(chave);
+}, 10 * 60_000).unref();
+
 function json(res, status, data) {
   res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...SECURITY });
   res.end(JSON.stringify(data));
@@ -31,6 +61,11 @@ createServer(async (req, res) => {
     if (req.method === 'GET' && path === '/health') {
       await db.query('SELECT hostname FROM instituicao LIMIT 0');
       return json(res, 200, { ok: true });
+    }
+    const espera = excedeuLimite(req, path);
+    if (espera) {
+      res.setHeader('Retry-After', String(espera));
+      return json(res, 429, { erro: 'Muitas tentativas. Aguarde alguns minutos e tente novamente.' });
     }
     if (path.startsWith('/api/admin/')) return await admin(req, res, db, json, path);
     if (path === '/api/cadastro') return await cadastro(req, res, db, json);

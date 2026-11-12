@@ -99,8 +99,9 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
                       <label>Nome <input name="nome" required maxlength="160"></label>
                       <label>Contato <input name="contato" required maxlength="255"></label>
                       <label>Empresa (se você representa uma) <input name="empresa" maxlength="160"></label>
+                      <p class="meta nota">Se informar uma empresa, o nome dela poderá aparecer no ranking e no mural — sem valores nem quantidades.</p>
                       <label>Quantidade <input name="quantidade" type="number" min="1" max="1000000" required></label>
-                      <label class="check"><input type="checkbox" name="consentimento" required> Concordo com o uso do meu nome e contato para intermediar esta doação (LGPD).</label>
+                      <label class="check"><input type="checkbox" name="consentimento" required> Concordo com o uso do meu nome e contato para intermediar esta doação (LGPD). <a class="link" href="#privacidade" (click)="abrirPrivacidade()">Ver política</a></label>
                       <button [disabled]="ocupado()">Registrar intenção</button>
                     </form>
                   </details>
@@ -268,9 +269,27 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
               <label>Contato da instituição <input name="contato" maxlength="255"></label>
               <label>Seu nome <input name="resp_nome" required maxlength="160"></label>
               <label>Seu contato <input name="resp_contato" required maxlength="255"></label>
-              <label class="check"><input type="checkbox" name="consentimento" required> Concordo com o uso dos dados informados para avaliar e entrar em contato sobre o cadastro (LGPD).</label>
+              <label class="check"><input type="checkbox" name="consentimento" required> Concordo com o uso dos dados informados para avaliar e entrar em contato sobre o cadastro (LGPD). <a class="link" href="#privacidade" (click)="abrirPrivacidade()">Ver política</a></label>
               <button [disabled]="ocupado()">Enviar cadastro</button>
             </form>
+          </div>
+        </details>
+        <details class="accordion" id="privacidade"><summary>Privacidade e uso de dados (LGPD)</summary>
+          <div class="acc-body politica">
+            <p>O Elo Brasil Solidário trata dados pessoais conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018), coletando apenas o necessário para intermediar doações.</p>
+            <h4>Quais dados coletamos</h4>
+            <ul>
+              <li><strong>Doação:</strong> nome, contato e quantidade oferecida; opcionalmente, o nome da empresa que você representa.</li>
+              <li><strong>Cadastro de instituição:</strong> nome e contato da instituição e do responsável.</li>
+            </ul>
+            <h4>Para que usamos</h4>
+            <p>Para a instituição combinar a entrega com você e confirmar o recebimento, e para avaliar e aprovar novas instituições. Não vendemos nem compartilhamos dados com terceiros para outras finalidades.</p>
+            <h4>Quem vê seus dados</h4>
+            <p>Seu nome e contato ficam visíveis apenas para a instituição que recebe a sua doação. Publicamente, aparece somente o nome da empresa (se informado) no ranking e no mural — nunca valores ou quantidades.</p>
+            <h4>Por quanto tempo</h4>
+            <p>Mantemos os dados enquanto forem necessários para a campanha e para o histórico de reconhecimento das empresas.</p>
+            <h4>Seus direitos</h4>
+            <p>Você pode pedir acesso, correção ou exclusão dos seus dados pelo contato da instituição para a qual doou ou pela coordenação do projeto Elo Brasil Solidário (UNASP).</p>
           </div>
         </details>
         <details class="accordion"><summary>Administração</summary>
@@ -316,6 +335,8 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
             <a href="#empresas">Empresas</a>
             <a href="#cadastrar">Cadastrar instituição</a>
             <a href="#painel">Área da instituição</a>
+            <a href="#explorar">Explorar</a>
+            <a href="#privacidade" (click)="abrirPrivacidade()">Privacidade</a>
           </nav>
         </div>
       </footer>
@@ -448,6 +469,11 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
     .rank-name .selos{display:flex;margin-top:.3rem}
     .link{color:var(--green-2);text-decoration:none;font-weight:600;font-size:.9rem}
     .link:hover{text-decoration:underline}
+    label.check .link{margin-left:.35rem;font-size:.85rem}
+    .nota{margin:-.2rem 0 .4rem;font-size:.8rem}
+    .politica h4{margin:1rem 0 .2rem;font-size:1.02rem}
+    .politica ul{margin:.3rem 0;padding-left:1.1rem;color:var(--muted)}
+    .politica p{color:var(--muted)}
     .filtros{display:flex;gap:.4rem;flex-wrap:wrap;margin:.4rem 0 .6rem}
     .filtros button{padding:.4rem .9rem;font-size:.85rem;box-shadow:none}
     .filtros button.ativo{background:var(--green-soft);color:var(--green-2);border-color:rgba(125,211,252,.45)}
@@ -619,6 +645,8 @@ class App {
   }
 
   selosDe(nome: string) { return this.empresas().find(e => e.nome === nome)?.selos ?? []; }
+
+  abrirPrivacidade() { document.getElementById('privacidade')?.setAttribute('open', ''); }
 
   explorar(form?: HTMLFormElement) {
     const q = form ? String(new FormData(form).get('q') ?? '') : '';
