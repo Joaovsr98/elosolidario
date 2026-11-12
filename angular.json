@@ -12,7 +12,8 @@
             "browser": "frontend/main.ts",
             "index": "frontend/index.html",
             "tsConfig": "tsconfig.json",
-            "outputPath": "dist/elo"
+            "outputPath": "dist/elo",
+            "outputHashing": "all"
           }
         }
       }

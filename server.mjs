@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { gzipSync } from 'node:zlib';
 import { donations } from './doacoes.mjs';
 import { cadastro, admin, explorar } from './instituicoes.mjs';
 import { empresas } from './empresas.mjs';
@@ -28,6 +29,8 @@ const REGRAS = {
   '/api/doacoes': [20, 60 * 60_000]
 };
 const tentativas = new Map();
+// Arquivos estáticos do build (imutáveis por deploy), com versão gzip calculada uma vez.
+const arquivos = new Map();
 
 function excedeuLimite(req, path) {
   const regra = req.method === 'POST' && REGRAS[path];
@@ -102,9 +105,20 @@ createServer(async (req, res) => {
     const asset = path === '/' ? '/index.html' : path;
     const type = /^\/[a-zA-Z0-9_.-]+\.(html|js|css)$/.test(asset) && mime.get(asset.slice(asset.lastIndexOf('.')));
     if (!type) return json(res, 404, { erro: 'Página indisponível' });
-    const content = await readFile(new URL('./dist/elo/browser' + asset, import.meta.url));
-    res.writeHead(200, { 'Content-Type': type, ...SECURITY, 'Content-Security-Policy': CSP });
-    res.end(content);
+    let arquivo = arquivos.get(asset);
+    if (!arquivo) {
+      const bruto = await readFile(new URL('./dist/elo/browser' + asset, import.meta.url));
+      arquivo = { bruto, gzip: gzipSync(bruto, { level: 9 }) };
+      arquivos.set(asset, arquivo);
+    }
+    const gzip = /\bgzip\b/.test(String(req.headers['accept-encoding'] ?? ''));
+    const cache = asset === '/index.html' ? 'no-cache'
+      : /-[A-Z0-9]{8,}\.(js|css)$/i.test(asset) ? 'public, max-age=31536000, immutable' : 'public, max-age=300';
+    res.writeHead(200, {
+      'Content-Type': type, ...SECURITY, 'Content-Security-Policy': CSP,
+      'Cache-Control': cache, Vary: 'Accept-Encoding', ...(gzip ? { 'Content-Encoding': 'gzip' } : {})
+    });
+    res.end(gzip ? arquivo.gzip : arquivo.bruto);
   } catch (error) {
     if (error.code === 'ENOENT') return json(res, 404, { erro: 'Arquivo indisponível' });
     console.error('Erro ao atender requisição:', error.code ?? error.name);
