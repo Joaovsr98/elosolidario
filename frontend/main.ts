@@ -13,6 +13,8 @@ interface Responsavel { id: number; nome: string; contato: string }
 interface InstAdmin { id: number; nome: string; hostname: string | null; contato: string | null; aprovada: boolean; responsaveis: Responsavel[] }
 interface RankItem { nome: string; pontos: number }
 interface Empresa { nome: string; confirmadas: number; selos: string[] }
+interface IndicAdmin { aprovadas: number; pendentes: number; campanhas: number; intencoes: number; recebidas: number; empresas: number }
+interface OpcaoTrimestre { chave: string; ano: number; tri: number; rotulo: string }
 interface CampanhaPublica { id: number; titulo: string; itens: number }
 interface InstPublica { id: number; nome: string; hostname: string; campanhas: CampanhaPublica[] }
 
@@ -214,7 +216,14 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
         }
         <section class="card" id="empresas">
           <h2>Empresas doadoras</h2>
-          <h3>Top 10 do trimestre · {{ trimestreLabel() }}</h3>
+          <div class="need-row ranking-head">
+            <h3>Top 10 do trimestre</h3>
+            <select class="sel" aria-label="Trimestre do ranking" (change)="mudarTrimestre($any($event.target).value)">
+              @for (op of opcoesTrimestre(); track op.chave) {
+                <option [value]="op.chave" [selected]="op.chave === trimestreSel()">{{ op.rotulo }}</option>
+              }
+            </select>
+          </div>
           @if (carregandoEmpresas()) {
             <div class="skel sk-row"></div><div class="skel sk-row"></div>
           } @else {
@@ -296,6 +305,16 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
           <div class="acc-body">
             @if (instituicoes(); as insts) {
               <div class="row-actions"><button class="ghost" [disabled]="ocupado()" (click)="sairAdmin()">Sair da administração</button></div>
+              @if (indicadoresAdmin(); as ind) {
+                <div class="stats">
+                  <div class="stat"><span class="num">{{ ind.aprovadas }}</span><span class="lbl">Instituições aprovadas</span></div>
+                  <div class="stat"><span class="num">{{ ind.pendentes }}</span><span class="lbl">Cadastros pendentes</span></div>
+                  <div class="stat"><span class="num">{{ ind.campanhas }}</span><span class="lbl">Campanhas abertas</span></div>
+                  <div class="stat"><span class="num">{{ ind.intencoes }}</span><span class="lbl">Intenções de doação</span></div>
+                  <div class="stat"><span class="num">{{ ind.recebidas }}</span><span class="lbl">Doações confirmadas</span></div>
+                  <div class="stat"><span class="num">{{ ind.empresas }}</span><span class="lbl">Empresas participantes</span></div>
+                </div>
+              }
               @if (codigoGerado(); as codigo) {
                 <p class="codebox" role="status">Código gerado (copie agora, aparece só uma vez):<br>{{ codigo }}</p>
               }
@@ -467,6 +486,11 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
     .selos{display:inline-flex;gap:.35rem;flex-wrap:wrap;margin-top:.35rem}
     .selo{font-size:.7rem;font-weight:600;padding:.14rem .55rem;border-radius:999px;background:var(--green-soft);color:var(--green-2)}
     .rank-name .selos{display:flex;margin-top:.3rem}
+    .ranking-head{margin-top:1.5rem}
+    .ranking-head h3{margin:0}
+    .sel{font:inherit;font-size:.85rem;color:var(--text);background:#26406a;border:1px solid var(--line-2);
+      border-radius:999px;padding:.35rem .8rem;cursor:pointer}
+    .sel:focus-visible{outline:2px solid var(--green);outline-offset:2px}
     .link{color:var(--green-2);text-decoration:none;font-weight:600;font-size:.9rem}
     .link:hover{text-decoration:underline}
     label.check .link{margin-left:.35rem;font-size:.85rem}
@@ -548,11 +572,21 @@ class App {
   readonly retorno = signal('');
   readonly retornoErro = signal(false);
   readonly ocupado = signal(false);
-  readonly trimestreLabel = computed(() => {
-    const d = new Date();
-    const periodo = [['jan', 'mar'], ['abr', 'jun'], ['jul', 'set'], ['out', 'dez']][Math.floor(d.getMonth() / 3)];
-    return periodo[0] + '–' + periodo[1] + ' ' + d.getFullYear();
+  readonly indicadoresAdmin = signal<IndicAdmin | null>(null);
+  readonly opcoesTrimestre = computed<OpcaoTrimestre[]>(() => {
+    const periodos = ['jan–mar', 'abr–jun', 'jul–set', 'out–dez'];
+    const agora = new Date();
+    let ano = agora.getFullYear();
+    let tri = Math.floor(agora.getMonth() / 3) + 1;
+    const opcoes: OpcaoTrimestre[] = [];
+    for (let i = 0; i < 4; i++) {
+      opcoes.push({ chave: ano + '-' + tri, ano, tri, rotulo: periodos[tri - 1] + ' ' + ano + (i === 0 ? ' (atual)' : '') });
+      tri -= 1;
+      if (tri === 0) { tri = 4; ano -= 1; }
+    }
+    return opcoes;
   });
+  readonly trimestreSel = signal(this.opcoesTrimestre()[0].chave);
 
   doar(item: number, form: HTMLFormElement) {
     const dados = new FormData(form);
@@ -648,6 +682,15 @@ class App {
 
   abrirPrivacidade() { document.getElementById('privacidade')?.setAttribute('open', ''); }
 
+  mudarTrimestre(chave: string) {
+    const opcao = this.opcoesTrimestre().find(op => op.chave === chave);
+    if (!opcao) return;
+    this.trimestreSel.set(chave);
+    this.http.get<RankItem[]>('/api/ranking', { params: { ano: opcao.ano, tri: opcao.tri } }).subscribe({
+      next: dados => this.ranking.set(dados), error: () => this.ranking.set([])
+    });
+  }
+
   explorar(form?: HTMLFormElement) {
     const q = form ? String(new FormData(form).get('q') ?? '') : '';
     this.http.get<InstPublica[]>('/api/explorar', { params: { q } }).subscribe({
@@ -706,7 +749,9 @@ class App {
   }
 
   sairAdmin() {
-    void this.acao('/api/admin/sair', {}, async () => { this.instituicoes.set(null); this.codigoGerado.set(''); });
+    void this.acao('/api/admin/sair', {}, async () => {
+      this.instituicoes.set(null); this.indicadoresAdmin.set(null); this.codigoGerado.set('');
+    });
   }
 
   aprovar(id: number, form: HTMLFormElement) {
@@ -719,6 +764,7 @@ class App {
 
   private async carregarAdmin() {
     this.instituicoes.set(await firstValueFrom(this.http.get<InstAdmin[]>('/api/admin/instituicoes')));
+    this.indicadoresAdmin.set(await firstValueFrom(this.http.get<IndicAdmin>('/api/admin/indicadores')));
   }
 
   private async acaoCodigo(path: string, dados: object, msg: string) {

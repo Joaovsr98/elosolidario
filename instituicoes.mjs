@@ -128,6 +128,20 @@ export async function admin(req, res, db, json, path) {
       return result.affectedRows ? json(res, 200, { ok: true, codigo }) : reject(404, 'Instituição indisponível.');
     }
   }
+  if (req.method === 'GET' && path === '/api/admin/indicadores') {
+    if (!authorized) return reject(401, 'Entre como administrador.');
+    const [[linha]] = await db.execute(`
+      SELECT
+        (SELECT COUNT(*) FROM instituicao WHERE aprovada_em IS NOT NULL) AS aprovadas,
+        (SELECT COUNT(*) FROM instituicao WHERE aprovada_em IS NULL) AS pendentes,
+        (SELECT COUNT(*) FROM campanha WHERE publicada_em <= UTC_TIMESTAMP(6)
+           AND (encerrada_em IS NULL OR encerrada_em > UTC_TIMESTAMP(6))) AS campanhas,
+        (SELECT COUNT(*) FROM intencao_doacao) AS intencoes,
+        (SELECT COUNT(*) FROM intencao_doacao WHERE recebida_em IS NOT NULL) AS recebidas,
+        (SELECT COUNT(*) FROM empresa) AS empresas
+    `);
+    return json(res, 200, Object.fromEntries(Object.entries(linha).map(([chave, valor]) => [chave, Number(valor)])));
+  }
   if (req.method === 'GET' && path === '/api/admin/instituicoes') {
     if (!authorized) return reject(401, 'Entre como administrador.');
     const [rows] = await db.execute(`
