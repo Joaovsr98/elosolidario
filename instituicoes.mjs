@@ -127,6 +127,46 @@ export async function admin(req, res, db, json, path) {
         [sha256(codigo), data.id]);
       return result.affectedRows ? json(res, 200, { ok: true, codigo }) : reject(404, 'Instituição indisponível.');
     }
+    if (path === '/api/admin/recusar') {
+      if (!Number.isSafeInteger(data.id) || data.id < 1) return reject(400, 'Instituição inválida.');
+      const conn = await db.getConnection();
+      try {
+        await conn.beginTransaction();
+        const [[pendente]] = await conn.execute(
+          'SELECT id FROM instituicao WHERE id = ? AND aprovada_em IS NULL AND hostname IS NULL FOR UPDATE', [data.id]);
+        if (!pendente) { await conn.rollback(); return reject(404, 'Cadastro pendente indisponível.'); }
+        await conn.execute('DELETE FROM responsavel WHERE instituicao_id = ?', [data.id]);
+        await conn.execute('DELETE FROM instituicao WHERE id = ?', [data.id]);
+        await conn.commit();
+        console.info('Admin recusou cadastro pendente', data.id);
+        return json(res, 200, { ok: true });
+      } catch (error) {
+        await conn.rollback();
+        if (error.code === 'ER_ROW_IS_REFERENCED_2') return reject(409, 'Cadastro já possui registros vinculados.');
+        throw error;
+      } finally {
+        conn.release();
+      }
+    }
+    if (path === '/api/admin/campanhas/encerrar') {
+      if (!Number.isSafeInteger(data.id) || data.id < 1) return reject(400, 'Campanha inválida.');
+      const [result] = await db.execute(`
+        UPDATE campanha SET encerrada_em = COALESCE(encerrada_em, GREATEST(UTC_TIMESTAMP(6), publicada_em))
+        WHERE id = ? AND publicada_em IS NOT NULL
+      `, [data.id]);
+      if (result.affectedRows) console.info('Admin encerrou campanha', data.id);
+      return result.affectedRows ? json(res, 200, { ok: true }) : reject(404, 'Campanha indisponível.');
+    }
+  }
+  if (req.method === 'GET' && path === '/api/admin/campanhas') {
+    if (!authorized) return reject(401, 'Entre como administrador.');
+    const [rows] = await db.execute(`
+      SELECT c.id, c.titulo, i.nome AS instituicao
+      FROM campanha c JOIN instituicao i ON i.id = c.instituicao_id
+      WHERE c.publicada_em <= UTC_TIMESTAMP(6) AND (c.encerrada_em IS NULL OR c.encerrada_em > UTC_TIMESTAMP(6))
+      ORDER BY c.id DESC LIMIT 200
+    `);
+    return json(res, 200, rows);
   }
   if (req.method === 'GET' && path === '/api/admin/indicadores') {
     if (!authorized) return reject(401, 'Entre como administrador.');

@@ -13,6 +13,7 @@ interface Responsavel { id: number; nome: string; contato: string }
 interface InstAdmin { id: number; nome: string; hostname: string | null; contato: string | null; aprovada: boolean; responsaveis: Responsavel[] }
 interface RankItem { nome: string; pontos: number }
 interface Empresa { nome: string; confirmadas: number; selos: string[] }
+interface CampanhaAdmin { id: number; titulo: string; instituicao: string }
 interface IndicAdmin { aprovadas: number; pendentes: number; campanhas: number; intencoes: number; recebidas: number; empresas: number }
 interface OpcaoTrimestre { chave: string; ano: number; tri: number; rotulo: string }
 interface CampanhaPublica { id: number; titulo: string; itens: number }
@@ -188,6 +189,21 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
                   }
                 </div>
               } @empty { <p class="muted">Nenhuma intenção nesta visão.</p> }
+              <h3>Responsáveis</h3>
+              <ul class="dir">@for (r of responsaveisPainel(); track r.id) {
+                <li class="need-row"><span>{{ r.nome }} <span class="meta">· {{ r.contato }}</span></span>
+                  @if (responsaveisPainel().length > 1) {
+                    <button type="button" class="ghost mini" [disabled]="ocupado()" (click)="removerResponsavel(r.id, r.nome)">Remover</button>
+                  }
+                </li>
+              } @empty { <li class="empty">Nenhum responsável cadastrado.</li> }</ul>
+              <details><summary>Adicionar responsável</summary>
+                <form #resp (submit)="$event.preventDefault(); adicionarResponsavel(resp)">
+                  <label>Nome <input name="nome" required maxlength="160"></label>
+                  <label>Contato <input name="contato" required maxlength="255"></label>
+                  <button [disabled]="ocupado()">Adicionar</button>
+                </form>
+              </details>
             } @else {
               <p class="muted">Acesse com o código da instituição para publicar campanhas e confirmar doações.</p>
               <form #login (submit)="$event.preventDefault(); entrar(login)">
@@ -333,11 +349,20 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
                   } @else {
                     <form #ap (submit)="$event.preventDefault(); aprovar(i.id, ap)">
                       <label>Domínio <input name="hostname" required maxlength="253" placeholder="nome.elo.vnbueno.com.br"></label>
-                      <button [disabled]="ocupado()">Aprovar e gerar código</button>
+                      <div class="row-actions">
+                        <button [disabled]="ocupado()">Aprovar e gerar código</button>
+                        <button type="button" class="ghost perigo" [disabled]="ocupado()" (click)="recusar(i.id, i.nome)">Recusar cadastro</button>
+                      </div>
                     </form>
                   }
                 </div>
               } @empty { <p class="muted">Nenhuma instituição.</p> }
+              <h3>Moderação de campanhas abertas</h3>
+              <ul class="dir">@for (c of campanhasAdmin(); track c.id) {
+                <li class="need-row"><span>{{ c.titulo }} <span class="meta">· {{ c.instituicao }}</span></span>
+                  <button type="button" class="ghost mini perigo" [disabled]="ocupado()" (click)="encerrarAdmin(c.id, c.titulo)">Encerrar</button>
+                </li>
+              } @empty { <li class="empty">Nenhuma campanha aberta.</li> }</ul>
             } @else {
               <form #adm (submit)="$event.preventDefault(); entrarAdmin(adm)">
                 <label>Chave de administrador <input name="codigo" type="password" required autocomplete="current-password"></label>
@@ -500,6 +525,9 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
     .politica p{color:var(--muted)}
     .filtros{display:flex;gap:.4rem;flex-wrap:wrap;margin:.4rem 0 .6rem}
     .filtros button{padding:.4rem .9rem;font-size:.85rem;box-shadow:none}
+    button.mini{padding:.3rem .75rem;font-size:.8rem;box-shadow:none}
+    button.perigo{color:var(--danger);border-color:rgba(230,139,130,.45)}
+    button.perigo:hover:not(:disabled){background:rgba(230,139,130,.12)}
     .filtros button.ativo{background:var(--green-soft);color:var(--green-2);border-color:rgba(125,211,252,.45)}
     .skel{position:relative;overflow:hidden;background:var(--surface-2);border:1px solid var(--line);border-radius:12px}
     .skel::after{content:'';position:absolute;inset:0;transform:translateX(-100%);
@@ -573,6 +601,8 @@ class App {
   readonly retornoErro = signal(false);
   readonly ocupado = signal(false);
   readonly indicadoresAdmin = signal<IndicAdmin | null>(null);
+  readonly campanhasAdmin = signal<CampanhaAdmin[]>([]);
+  readonly responsaveisPainel = signal<Responsavel[]>([]);
   readonly opcoesTrimestre = computed<OpcaoTrimestre[]>(() => {
     const periodos = ['jan–mar', 'abr–jun', 'jul–set', 'out–dez'];
     const agora = new Date();
@@ -608,7 +638,9 @@ class App {
   }
 
   sair() {
-    void this.acao('/api/painel/sair', {}, async () => { this.doacoes.set(null); this.campanhas.set(null); });
+    void this.acao('/api/painel/sair', {}, async () => {
+      this.doacoes.set(null); this.campanhas.set(null); this.responsaveisPainel.set([]);
+    });
   }
 
   receber(id: number) {
@@ -665,6 +697,7 @@ class App {
   private async carregarPainel() {
     this.doacoes.set(await firstValueFrom(this.http.get<Doacao[]>('/api/painel/doacoes')));
     await this.carregarCampanhas();
+    await this.carregarResponsaveis();
   }
 
   private async carregarCampanhas() {
@@ -765,6 +798,54 @@ class App {
   private async carregarAdmin() {
     this.instituicoes.set(await firstValueFrom(this.http.get<InstAdmin[]>('/api/admin/instituicoes')));
     this.indicadoresAdmin.set(await firstValueFrom(this.http.get<IndicAdmin>('/api/admin/indicadores')));
+    this.campanhasAdmin.set(await firstValueFrom(this.http.get<CampanhaAdmin[]>('/api/admin/campanhas')));
+  }
+
+  recusar(id: number, nome: string) {
+    if (!confirm('Recusar e apagar o cadastro pendente de "' + nome + '"? Esta ação não pode ser desfeita.')) return;
+    void this.acaoAdmin('/api/admin/recusar', { id }, 'Cadastro recusado.');
+  }
+
+  encerrarAdmin(id: number, titulo: string) {
+    if (!confirm('Encerrar a campanha "' + titulo + '"? Ela deixará de aparecer para os doadores.')) return;
+    void this.acaoAdmin('/api/admin/campanhas/encerrar', { id }, 'Campanha encerrada pela administração.');
+  }
+
+  private async acaoAdmin(path: string, dados: object, msg: string) {
+    this.ocupado.set(true);
+    this.retorno.set('');
+    this.retornoErro.set(false);
+    try {
+      await firstValueFrom(this.http.post(path, dados));
+      await this.carregarAdmin();
+      this.retorno.set(msg);
+    } catch (erro: unknown) {
+      if (erro instanceof HttpErrorResponse && erro.status === 401) this.instituicoes.set(null);
+      this.tratarErro(erro);
+    } finally {
+      this.ocupado.set(false);
+    }
+  }
+
+  adicionarResponsavel(form: HTMLFormElement) {
+    const dados = new FormData(form);
+    void this.acao('/api/painel/responsaveis', { nome: dados.get('nome'), contato: dados.get('contato') }, async () => {
+      form.reset();
+      await this.carregarResponsaveis();
+      this.retorno.set('Responsável adicionado.');
+    });
+  }
+
+  removerResponsavel(id: number, nome: string) {
+    if (!confirm('Remover ' + nome + ' dos responsáveis?')) return;
+    void this.acao('/api/painel/responsaveis/remover', { id }, async () => {
+      await this.carregarResponsaveis();
+      this.retorno.set('Responsável removido.');
+    });
+  }
+
+  private async carregarResponsaveis() {
+    this.responsaveisPainel.set(await firstValueFrom(this.http.get<Responsavel[]>('/api/painel/responsaveis')));
   }
 
   private async acaoCodigo(path: string, dados: object, msg: string) {

@@ -185,6 +185,36 @@ export async function donations(req, res, db, json, path, host, instituicao) {
         [titulo, descricao, data.id, institution]);
       return result.affectedRows ? json(res, 200, { ok: true }) : reject(404, 'Campanha indisponível.');
     }
+    if (path === '/api/painel/responsaveis') {
+      if (!authorized) return reject(401, 'Entre no painel.');
+      const nome = typeof data.nome === 'string' ? data.nome.trim() : '';
+      const contato = typeof data.contato === 'string' ? data.contato.trim() : '';
+      if (!nome || nome.length > 160 || !contato || contato.length > 255) {
+        return reject(400, 'Confira os dados do responsável.');
+      }
+      const [[{ total }]] = await db.execute(
+        'SELECT COUNT(*) AS total FROM responsavel WHERE instituicao_id = ?', [institution]);
+      if (Number(total) >= 20) return reject(409, 'Limite de responsáveis atingido.');
+      await db.execute('INSERT INTO responsavel (instituicao_id, nome, contato) VALUES (?, ?, ?)',
+        [institution, nome, contato]);
+      return json(res, 201, { ok: true });
+    }
+    if (path === '/api/painel/responsaveis/remover') {
+      if (!authorized) return reject(401, 'Entre no painel.');
+      if (!Number.isSafeInteger(data.id) || data.id < 1) return reject(400, 'Responsável inválido.');
+      const [[{ total }]] = await db.execute(
+        'SELECT COUNT(*) AS total FROM responsavel WHERE instituicao_id = ?', [institution]);
+      if (Number(total) <= 1) return reject(409, 'Mantenha pelo menos um responsável.');
+      const [result] = await db.execute('DELETE FROM responsavel WHERE id = ? AND instituicao_id = ?',
+        [data.id, institution]);
+      return result.affectedRows ? json(res, 200, { ok: true }) : reject(404, 'Responsável indisponível.');
+    }
+  }
+  if (req.method === 'GET' && path === '/api/painel/responsaveis') {
+    if (!authorized) return reject(401, 'Entre no painel.');
+    const [rows] = await db.execute(
+      'SELECT id, nome, contato FROM responsavel WHERE instituicao_id = ? ORDER BY id', [institution]);
+    return json(res, 200, rows);
   }
   if (req.method === 'GET' && path === '/api/painel/doacoes') {
     if (!authorized) return reject(401, 'Entre no painel.');
