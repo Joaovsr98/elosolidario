@@ -1,27 +1,96 @@
-# elosolidario
-## Catálogo Angular no Railway
+# Elo Brasil Solidário
 
-A demonstração anterior continua disponível com `node demo.mjs`. O catálogo Angular usa o MySQL e resolve a instituição pelo hostname cadastrado. Cada hostname corresponde a uma instituição aprovada. O catálogo é público e aceita intenções de doação.
+**Conectando quem quer ajudar a quem precisa.**
 
-1. Crie um projeto no Railway com um serviço MySQL e um serviço conectado ao repositório. Use a raiz do repositório para o build Docker.
-2. No MySQL, aplique os arquivos V1 e V2 de backend/src/main/resources/db/migration, nessa ordem, uma vez por banco. Se V1 já foi aplicada, aplique somente V2.
-3. No serviço da aplicação, adicione MYSQL_URL com a referência `${{MySQL.MYSQL_URL}}`. Ajuste MySQL para o nome do serviço de banco. O serviço escuta na variável PORT do Railway.
-4. Gere um domínio do Railway para validar o catálogo. Cadastre o hostname exato da URL, sem https://, no registro da instituição aprovada. Cadastre uma campanha publicada e suas necessidades para o teste.
-5. Para ativar um domínio próprio, adicione o hostname em Public Networking e copie os registros CNAME e TXT fornecidos pelo Railway ao provedor DNS. A sugestão de namespace é *.elo.vnbueno.com.br, com um hostname cadastrado por instituição. Na troca de domínio, atualize o hostname da instituição.
-6. Abra o catálogo em dois endereços cadastrados e confira se cada um mostra somente as campanhas da instituição correspondente. O endpoint /health verifica a conexão e a migração V2.
+Plataforma que conecta pessoas e empresas a instituições sociais que arrecadam bens materiais. Projeto Integrador de Análise e Desenvolvimento de Sistemas — UNASP · InovaTec 2026/2.
 
-O painel usa a variável ELO_PANEL_KEYS no Railway. O valor é um objeto JSON que mapeia o hostname de cada instituição para um código aleatório de 64 caracteres hexadecimais minúsculos. Use um código diferente por domínio. Trocar o código invalida as sessões daquele domínio. O painel também publica e encerra campanhas; novas campanhas deixam de depender de SQL. Teste com dados fictícios.
+- Instituto Esperança (teste): https://elo.vnbueno.com.br
+- Instituição Horizonte (teste): https://elosolidario-production.up.railway.app
 
-## Cadastro e administração de instituições (migração V3)
+## Funcionalidades
 
-A migração V3 (db/migration/V3__acesso_instituicao.sql) adiciona à instituição o `codigo_hash` (hash do código do painel guardado no banco), `contato` e `criada_em`, e cria a tabela `responsavel`. Aplique V3 no MySQL **antes** de publicar a versão com essas mudanças — o catálogo passa a ler `codigo_hash`.
+**Para quem doa (sem login)**
+- Campanhas da instituição com necessidades, metas e **barra de progresso** (recebido × meta).
+- Registro da **intenção de doar** (nome, contato, quantidade e, opcionalmente, a empresa que representa), com **consentimento LGPD** obrigatório.
+- **Explorar instituições**: busca pública por instituição ou campanha em toda a rede.
+- **Empresas que transformam**: Top 10 trimestral (com histórico dos últimos trimestres), **Mural de Empresas Solidárias** com busca e ordem que muda diariamente, e **selos** (Primeiro Elo, Elo Constante, Elo em Ascensão, Destaque Solidário). Valores e quantidades nunca são expostos.
+- Seção de **Privacidade (LGPD)** explicando dados coletados, finalidade, quem vê, retenção e direitos.
 
-O código do painel passa a ser validado pelo hash no banco. Para compatibilidade, se a instituição ainda não tem `codigo_hash`, o sistema cai de volta na ELO_PANEL_KEYS, então as instituições já configuradas continuam logando com o mesmo código. A publicação invalida as sessões abertas (o esquema de assinatura do cookie muda); basta entrar de novo.
+**Para a instituição (painel com código de acesso)**
+- Indicadores (campanhas ativas, doações pendentes e recebidas).
+- Criar campanhas com itens e metas, **salvar como rascunho**, **publicar**, **editar** e **encerrar**.
+- Lista de intenções com **filtro** (pendentes/recebidas), **confirmação de recebimento** e **exportação CSV**.
+- Cadastro e remoção de **responsáveis**.
 
-O cadastro público (`POST /api/cadastro`) cria uma instituição pendente com um responsável. A administração usa a variável ELO_ADMIN_KEY (um código aleatório de 64 caracteres hexadecimais minúsculos, igual às chaves de painel) e fica nas rotas `/api/admin/*`: lista todas as instituições, aprova (define o hostname, marca a aprovação e gera um código mostrado uma única vez) e regera o código. Gere uma chave com `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. O hostname atribuído na aprovação só funciona depois de configurado em Railway + DNS.
+**Para a administração (chave de administrador)**
+- Indicadores gerais da rede.
+- Análise de cadastros: **aprovar** (define o domínio e gera o código, mostrado uma única vez), **recusar** cadastros pendentes e **regerar código**.
+- **Moderação**: encerrar campanhas abertas de qualquer instituição.
 
-## Empresas doadoras (migração V4)
+## Arquitetura
 
-A migração V4 (db/migration/V4__empresas_doadoras.sql) cria a tabela `empresa` e adiciona `empresa_id` a `intencao_doacao`. Aplique V4 **antes** de publicar — a doação passa a gravar `empresa_id` e o ranking lê a tabela `empresa`.
+- **Frontend**: Angular 20 (standalone, zoneless, signals) em `frontend/main.ts`.
+- **Backend**: Node.js sem framework — `server.mjs` (roteamento, estáticos, segurança), `doacoes.mjs` (doações e painel), `instituicoes.mjs` (cadastro, explorar e administração), `empresas.mjs` (ranking e mural).
+- **Banco**: MySQL 8, migrações em `backend/src/main/resources/db/migration/`.
+- **Infra**: Docker no Railway; o mesmo serviço entrega a aplicação Angular e a API. `PORT` padrão 8080; `GET /health` verifica o banco.
+- **Multi-tenant por domínio**: cada instituição aprovada tem um `hostname` único. A API identifica a instituição pelo domínio da requisição e filtra todas as consultas por ela no servidor — o frontend nunca escolhe o ID da instituição.
 
-Na doação, um campo opcional de empresa faz *find-or-create* por nome normalizado (sem acentos, minúsculo), vinculando a intenção à empresa. Endpoints públicos cross-tenant: `GET /api/ranking` (Top 10 do trimestre corrente, 1 ponto por doação confirmada, filtrado por `recebida_em`; o histórico é preservado e a contagem recomeça por trimestre sem job de reset) e `GET /api/empresas?q=` (diretório com busca por nome). Valores e quantidades doados nunca são expostos.
+`demo.mjs` é a demonstração anterior (HTML + SQLite), mantida apenas como referência.
+
+## Configuração e deploy (Railway)
+
+1. Projeto no Railway com um serviço **MySQL** e um serviço conectado a este repositório (build Docker pela raiz). Um push na `main` publica automaticamente.
+2. **Migrações**: aplique V1, V2, V3 e V4, nessa ordem, uma vez por banco. **Aplique cada migração antes de publicar o código que depende dela** — senão as consultas falham.
+3. Variáveis do serviço da aplicação:
+   - `MYSQL_URL` = `${{MySQL.MYSQL_URL}}`
+   - `ELO_ADMIN_KEY` = 64 caracteres hexadecimais minúsculos (sem espaços)
+   - `ELO_PANEL_KEYS` (legado) = JSON `{ "hostname": "código" }`, usado só por instituições que ainda não têm `codigo_hash` no banco
+   - Gere chaves com: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+4. **Domínio próprio**: adicione o hostname em *Public Networking* e copie os registros CNAME e TXT para o DNS (Registro.br). O hostname de uma instituição aprovada só funciona depois disso.
+5. **Ao criar um novo módulo `.mjs`**, inclua-o na linha `COPY` do `Dockerfile` — a imagem final copia apenas os arquivos listados.
+
+> Redes com inspeção de HTTPS (comuns em escolas e empresas) podem exibir `ERR_CERT_AUTHORITY_INVALID` mesmo com o certificado correto. Para apresentações, use uma rede sem esse filtro (ex.: 4G).
+
+## API
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| GET | `/health` | público | saúde do serviço e do banco |
+| GET | `/api/campanhas` | público (por domínio) | campanhas abertas da instituição, com progresso |
+| POST | `/api/doacoes` | público (por domínio) | registra intenção de doação (exige consentimento) |
+| GET | `/api/explorar?q=` | público | instituições e campanhas abertas da rede |
+| GET | `/api/ranking?ano=&tri=` | público | Top 10 do trimestre (atual por padrão) |
+| GET | `/api/empresas?q=` | público | mural de empresas com selos |
+| POST | `/api/cadastro` | público | cadastro de instituição pendente (exige consentimento) |
+| POST | `/api/painel/entrar` · `/sair` | instituição | sessão do painel |
+| GET | `/api/painel/doacoes` · `/campanhas` · `/responsaveis` | instituição | dados do painel |
+| POST | `/api/painel/receber` | instituição | confirma recebimento |
+| POST | `/api/painel/campanhas` · `/publicar` · `/editar` · `/encerrar` | instituição | gestão de campanhas |
+| POST | `/api/painel/responsaveis` · `/remover` | instituição | gestão de responsáveis |
+| POST | `/api/admin/entrar` · `/sair` | admin | sessão de administração |
+| GET | `/api/admin/instituicoes` · `/indicadores` · `/campanhas` | admin | visão geral |
+| POST | `/api/admin/aprovar` · `/recusar` · `/codigo` · `/campanhas/encerrar` | admin | análise e moderação |
+
+## Segurança e privacidade
+
+- Autorização sempre no servidor; isolamento por instituição derivado do domínio, nunca do payload.
+- Códigos de painel guardados como **hash** (SHA-256); sessões por cookie **HMAC** `HttpOnly`, `Secure`, `SameSite=Strict`, com expiração.
+- Requisições POST exigem `Origin` do próprio site e `Content-Type: application/json` (proteção contra CSRF).
+- Consultas **parametrizadas**; exportação CSV protegida contra injeção de fórmulas.
+- Cabeçalhos: **CSP**, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy, X-Content-Type-Options.
+- **Limite de tentativas** por IP: login do painel e do admin (10 a cada 15 min), cadastro (5/h), doações (20/h).
+- **LGPD**: consentimento validado no servidor, coleta mínima, política de privacidade pública, nome/contato visíveis só para a instituição que recebe a doação.
+- Desempenho: estáticos com **hash no nome**, **gzip** e cache imutável; `index.html` sempre revalidado.
+
+## Desenvolvimento
+
+```bash
+npm ci
+npm run build
+```
+
+```bash
+MYSQL_URL="mysql://usuario:senha@host:3306/banco" npm start
+```
+
+Veja o [ROADMAP](ROADMAP.md) para o status e as próximas fases.

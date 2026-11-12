@@ -1,45 +1,58 @@
 # Elo Brasil Solidário — Roadmap
 
-_Status em 10/11/2026. Stack mantido: Angular 20 + Node.js + MySQL + Railway (sem migração para Java/Vercel/Render)._
+_Atualizado em 12/11/2026. Stack mantido: Angular 20 + Node.js + MySQL + Railway._
 
 Slogan: **Conectando quem quer ajudar a quem precisa.**
 
-## No ar hoje (MVP funcional e publicado)
+## No ar (MVP completo para a apresentação)
 
-- **Multi-tenant por domínio**: cada instituição responde por um hostname próprio; a API resolve e isola os dados por instituição no servidor.
-- **Doação sem login**: a pessoa vê as campanhas e registra a intenção (nome, contato, quantidade). Opcionalmente informa a empresa que representa.
-- **Painel da instituição** (acesso por código): publica, edita, salva como rascunho e encerra campanhas; cadastra necessidades e metas; acompanha intenções e **confirma o recebimento**.
-- **Progresso da campanha**: barra de recebido × meta por item.
-- **Cadastro e aprovação de instituições**: formulário público cria instituição pendente + responsável; administração aprova, define o domínio e gera o código de acesso.
-- **Empresas que transformam**:
-  - **Top 10 trimestral** (1 ponto por doação confirmada, ciclos por trimestre, reinício automático, histórico de dados preservado, **sem expor valores ou quantidades**).
-  - **Diretório público com busca** por nome.
-  - **Selos de reconhecimento** (Primeiro Elo, Elo Constante, Elo em Ascensão, Destaque Solidário).
-- **Indicadores** no topo (campanhas, itens, empresas).
-- **Identidade visual** (tema azul-marinho + ciano, hero com arte própria), **favicon/meta/SEO**, título dinâmico e acessibilidade básica (foco visível, movimento reduzido).
+**Doadores e público**
+- Catálogo por instituição (multi-tenant por domínio) com metas, **progresso** e intenção de doação sem login.
+- **Explorar instituições**: busca pública por instituição ou campanha em toda a rede.
+- Consentimento **LGPD** obrigatório (validado no servidor) e seção pública de **privacidade**.
+
+**Instituições**
+- Painel com **indicadores**, campanhas (rascunho, publicar, editar, encerrar), necessidades e metas.
+- Intenções com **filtro**, confirmação de recebimento e **exportação CSV**.
+- Gestão de **responsáveis**.
+- Cadastro público com aprovação pela administração.
+
+**Empresas que transformam**
+- **Top 10 trimestral** (1 ponto por doação confirmada, reinício por trimestre, **histórico** dos últimos trimestres, sem valores).
+- **Mural de Empresas Solidárias** com busca e **rotação diária** para dar visibilidade às menores.
+- **Selos**: Primeiro Elo, Elo Constante, Elo em Ascensão, Destaque Solidário.
+
+**Administração**
+- Indicadores gerais, aprovação/recusa de cadastros, regerar código e **moderação** de campanhas.
+
+**Qualidade**
+- Segurança: CSP e cabeçalhos, sessões HMAC, CSRF por origem, consultas parametrizadas, **limite de tentativas** contra força bruta e spam.
+- Desempenho: gzip, cache imutável e hash nos arquivos; skeletons de carregamento.
+- Identidade visual azul-marinho + ciano, responsiva, com acessibilidade básica (foco visível, pular conteúdo, movimento reduzido).
 
 ## Próximas fases
 
-### Fase A — Contas e busca (~3–4 semanas)
-- Contas de **doador**: login, histórico pessoal e acompanhamento do status das contribuições.
-- Contas/perfil de **empresa**: logotipo, descrição, localização, histórico privado e opção de aparecer publicamente ou permanecer anônima.
-- **Localização** (cidade/estado) e **categorias/setores**, com filtros na busca de instituições, campanhas e empresas.
+### Fase A — Contas e busca (~3 semanas)
+- Contas de **doador**: login, histórico e acompanhamento do status das contribuições.
+- Contas/perfil de **empresa**: logotipo, descrição, localização, histórico privado e opção explícita de aparecer publicamente ou permanecer anônima.
+- **Localização** (cidade/estado) e **categorias** com filtros — habilita também o selo **Elo Local**.
 
-### Fase B — Reconhecimento (~2–3 semanas)
-- **Mural de Empresas Solidárias** com autorização (opt-in) e rotação para dar visibilidade a pequenas e novas participantes.
-- **Histórico de rankings** por trimestre (tela de edições anteriores).
-- Critérios de pontuação ampliados (frequência, campanhas apoiadas) e **proteção antifraude** (sem pontuação duplicada ou cancelamentos indevidos).
+### Fase B — Reconhecimento e confiança (~2 semanas)
+- Critérios de pontuação ampliados (frequência, campanhas apoiadas) e **antifraude** (pontuação duplicada, cancelamentos indevidos).
+- **Denúncias** de campanhas e cadastros.
 
-### Fase C — Governança (~3–4 semanas)
-- **Moderação** de campanhas e cadastros, controle de **denúncias**, aprovação de campanhas.
-- **Relatórios** da instituição e indicadores gerais da administração.
-- **LGPD**: consentimento, política de privacidade, direitos do titular e **trilha de auditoria** das operações importantes.
-- **Antispam/captcha** no cadastro público.
+### Fase C — Governança e LGPD avançada (~2 semanas)
+- **Trilha de auditoria** persistida em banco para operações administrativas.
+- Exclusão e exportação de dados pelo próprio titular.
+- Relatórios avançados por período e captcha no cadastro público.
 
 ## Estimativa
 
-Para completar toda a visão do projeto, mantendo o stack atual e no ritmo de desenvolvimento assistido: **~8 a 11 semanas de trabalho focado**. O item mais pesado é a Fase A (autenticação). Esse número é tempo de desenvolvimento; o calendário do projeto de extensão inclui, em paralelo, as interações com o público (entrevistas, validação e coleta de evidências por bloco).
+Para fechar toda a visão do documento a partir daqui: **~6 a 8 semanas** de desenvolvimento focado, mantendo o stack. Esse número não inclui o calendário do projeto de extensão (entrevistas, validações e coleta de evidências), que corre em paralelo.
 
-## Nota de prazo
+## Pendências operacionais
 
-Para a entrega de **16/11/2026**, a meta é um **MVP demo-ready** — já no ar e apresentável — com as fases acima registradas como evolução planejada. Tentar emendar os módulos maiores (contas, LGPD, moderação) nesse prazo traria funcionalidades incompletas e risco na apresentação.
+- Limpar os dados de teste no banco (empresa e instituição "TESTE", campanha "TESTE - Campanha de brinquedos").
+- Corrigir acentos em nomes inseridos por SQL (ex.: "Instituio Horizonte", "Esperanca", "Arrecadacao").
+- Trocar a senha `root` do MySQL antes de usar dados reais.
+- Acompanhar o crédito do plano trial do Railway para o serviço não sair do ar.
