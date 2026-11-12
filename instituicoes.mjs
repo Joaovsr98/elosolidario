@@ -59,10 +59,10 @@ export async function explorar(req, res, db, json) {
       AND c.publicada_em <= UTC_TIMESTAMP(6)
       AND (c.encerrada_em IS NULL OR c.encerrada_em > UTC_TIMESTAMP(6))
     WHERE i.aprovada_em IS NOT NULL AND i.hostname IS NOT NULL
-      AND (? = '' OR i.nome LIKE CONCAT('%', ?, '%'))
+      AND (? = '' OR i.nome LIKE CONCAT('%', ?, '%') OR c.titulo LIKE CONCAT('%', ?, '%'))
     ORDER BY i.nome, c.id DESC
     LIMIT 200
-  `, [q, q]);
+  `, [q, q, q]);
   const instituicoes = new Map();
   for (const row of rows) {
     if (!instituicoes.has(row.id)) instituicoes.set(row.id, {

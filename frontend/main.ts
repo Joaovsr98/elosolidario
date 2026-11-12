@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, provideZonelessChangeDetection } from '@angular/core';
+import { Component, inject, signal, computed, effect, provideZonelessChangeDetection } from '@angular/core';
 import { HttpClient, HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { bootstrapApplication } from '@angular/platform-browser';
 
@@ -23,6 +23,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
   selector: 'elo-app',
   template: `
     <div class="page">
+      <a class="pular" href="#conteudo">Pular para o conteúdo</a>
       <header class="topbar">
         <div class="inner">
           <span class="mark">E</span>
@@ -35,8 +36,13 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
           </nav>
         </div>
       </header>
-      <main>
-        @if (retorno()) { <p class="toast" [class.erro]="retornoErro()" role="status">{{ retorno() }}</p> }
+      <main id="conteudo">
+        @if (retorno()) {
+          <p class="toast" [class.erro]="retornoErro()" role="status">
+            <span>{{ retorno() }}</span>
+            <button type="button" class="fechar" aria-label="Fechar aviso" (click)="retorno.set('')">×</button>
+          </p>
+        }
         @if (catalogo(); as dados) {
           <section class="hero">
             <div class="banner">
@@ -269,7 +275,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
           <h2>Explorar instituições</h2>
           <p class="meta">Conheça outras instituições da rede e suas campanhas abertas.</p>
           <form #exp class="search" (submit)="$event.preventDefault(); explorar(exp)">
-            <input name="q" maxlength="160" placeholder="Buscar instituição" aria-label="Buscar instituição">
+            <input name="q" maxlength="160" placeholder="Buscar instituição ou campanha" aria-label="Buscar instituição ou campanha">
             <button class="ghost">Buscar</button>
           </form>
           @if (carregandoExplorar()) {
@@ -423,9 +429,18 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
       .brand small{display:none}
     }
     main{width:100%;max-width:880px;margin:0 auto;padding:1rem 1.25rem 3.5rem;box-sizing:border-box;flex:1}
-    .toast{margin:1rem 0;padding:.75rem 1rem;border-radius:12px;font-weight:500;
-      background:var(--green-soft);border:1px solid rgba(56,189,248,.4);color:var(--green-2)}
-    .toast.erro{background:rgba(224,119,107,.14);border-color:rgba(224,119,107,.45);color:var(--danger)}
+    .toast{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);z-index:30;
+      width:min(560px,calc(100% - 2rem));box-sizing:border-box;margin:0;padding:.8rem 1rem;
+      display:flex;align-items:flex-start;gap:.75rem;border-radius:14px;font-weight:500;
+      background:#1c3a5e;border:1px solid rgba(125,211,252,.5);color:#dff3ff;
+      box-shadow:0 14px 36px rgba(5,12,25,.4)}
+    .toast.erro{background:#4a2a33;border-color:rgba(230,139,130,.6);color:#ffe0dc}
+    .toast .fechar{margin-left:auto;background:none;box-shadow:none;color:inherit;padding:0 .25rem;
+      font-size:1.25rem;line-height:1;border-radius:6px}
+    .toast .fechar:hover:not(:disabled){filter:none;background:rgba(255,255,255,.1)}
+    .pular{position:absolute;left:1rem;top:-3rem;z-index:40;background:var(--surface);color:var(--text);
+      padding:.5rem .9rem;border-radius:10px;border:1px solid var(--line-2);text-decoration:none}
+    .pular:focus{top:.6rem}
     .hero{padding:1.8rem 0 .5rem}
     .banner{position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--line);
       min-height:300px;display:flex;align-items:flex-end;animation:rise .55s ease both;
@@ -888,6 +903,13 @@ class App {
   }
 
   constructor() {
+    let temporizador: ReturnType<typeof setTimeout> | undefined;
+    effect(() => {
+      const mensagem = this.retorno();
+      const erro = this.retornoErro();
+      clearTimeout(temporizador);
+      if (mensagem) temporizador = setTimeout(() => this.retorno.set(''), erro ? 9000 : 6000);
+    });
     this.carregarEmpresas();
     this.explorar();
     void this.carregarPainel().catch(() => {});
