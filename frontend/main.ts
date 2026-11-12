@@ -13,6 +13,8 @@ interface Responsavel { id: number; nome: string; contato: string }
 interface InstAdmin { id: number; nome: string; hostname: string | null; contato: string | null; aprovada: boolean; responsaveis: Responsavel[] }
 interface RankItem { nome: string; pontos: number }
 interface Empresa { nome: string; confirmadas: number; selos: string[] }
+interface CampanhaPublica { id: number; titulo: string; itens: number }
+interface InstPublica { id: number; nome: string; hostname: string; campanhas: CampanhaPublica[] }
 
 @Component({
   selector: 'elo-app',
@@ -23,6 +25,7 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
           <span class="mark">E</span>
           <span class="brand">Elo Brasil Solidário<small>Rede de solidariedade</small></span>
           <nav class="nav" aria-label="Navegação principal">
+            <a href="#explorar">Explorar</a>
             <a href="#empresas">Empresas</a>
             <a href="#cadastrar">Cadastrar</a>
             <a href="#painel">Painel</a>
@@ -37,7 +40,7 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
               <svg class="banner-art" viewBox="0 0 800 360" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
                 <defs>
                   <radialGradient id="bg" cx="28%" cy="26%" r="90%">
-                    <stop offset="0%" stop-color="#16324f"/><stop offset="100%" stop-color="#091525"/>
+                    <stop offset="0%" stop-color="#28496f"/><stop offset="100%" stop-color="#15263f"/>
                   </radialGradient>
                   <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
                     <feGaussianBlur stdDeviation="5" result="b"/>
@@ -110,6 +113,11 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
             <h2>Painel da instituição</h2>
             @if (doacoes(); as lista) {
               <div class="row-actions"><button class="ghost" [disabled]="ocupado()" (click)="sair()">Sair</button></div>
+              <div class="stats painel-stats">
+                <div class="stat"><span class="num">{{ resumoPainel().campanhas }}</span><span class="lbl">Campanhas ativas</span></div>
+                <div class="stat"><span class="num">{{ resumoPainel().pendentes }}</span><span class="lbl">Doações pendentes</span></div>
+                <div class="stat"><span class="num">{{ resumoPainel().recebidas }}</span><span class="lbl">Doações recebidas</span></div>
+              </div>
               <h3>Campanhas</h3>
               @if (campanhas(); as cs) {
                 @for (c of cs; track c.id) {
@@ -158,8 +166,14 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
                   </div>
                 </form>
               </details>
-              <h3>Intenções recebidas</h3>
-              @for (doacao of lista; track doacao.id) {
+              <h3>Intenções de doação</h3>
+              <div class="filtros">
+                <button type="button" class="ghost" [class.ativo]="filtroDoacoes() === 'todas'" (click)="filtroDoacoes.set('todas')">Todas ({{ resumoPainel().intencoes }})</button>
+                <button type="button" class="ghost" [class.ativo]="filtroDoacoes() === 'pendentes'" (click)="filtroDoacoes.set('pendentes')">Pendentes ({{ resumoPainel().pendentes }})</button>
+                <button type="button" class="ghost" [class.ativo]="filtroDoacoes() === 'recebidas'" (click)="filtroDoacoes.set('recebidas')">Recebidas ({{ resumoPainel().recebidas }})</button>
+                <button type="button" class="ghost" [disabled]="!lista.length" (click)="exportarCsv()">Exportar CSV</button>
+              </div>
+              @for (doacao of doacoesFiltradas(); track doacao.id) {
                 <div class="subcard">
                   <div class="need-row"><strong>{{ doacao.campanha }}</strong>
                     @if (doacao.recebida) { <span class="badge ok">Recebida</span> }
@@ -170,7 +184,7 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
                     <button [disabled]="ocupado()" (click)="receber(doacao.id)">Confirmar recebimento</button>
                   }
                 </div>
-              } @empty { <p class="muted">Nenhuma intenção registrada.</p> }
+              } @empty { <p class="muted">Nenhuma intenção nesta visão.</p> }
             } @else {
               <p class="muted">Acesse com o código da instituição para publicar campanhas e confirmar doações.</p>
               <form #login (submit)="$event.preventDefault(); entrar(login)">
@@ -204,7 +218,9 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
             <div class="skel sk-row"></div><div class="skel sk-row"></div>
           } @else {
             <ol class="rank">@for (empresa of ranking(); track empresa.nome) {
-              <li><span class="rank-name">{{ empresa.nome }}</span><span class="meta">{{ empresa.pontos }} confirmada(s)</span></li>
+              <li><span class="rank-name">{{ empresa.nome }}
+                  @if (selosDe(empresa.nome).length) { <span class="selos">@for (s of selosDe(empresa.nome); track s) { <span class="selo">{{ s }}</span> }</span> }
+                </span><span class="meta">{{ empresa.pontos }} confirmada(s)</span></li>
             } @empty { <li class="empty">Ainda sem doações confirmadas neste trimestre.</li> }</ol>
           }
           <h3>Mural de Empresas Solidárias</h3>
@@ -221,6 +237,28 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
                 @if (empresa.selos.length) { <span class="selos">@for (s of empresa.selos; track s) { <span class="selo">{{ s }}</span> }</span> }
               </li>
             } @empty { <li class="empty">Nenhuma empresa encontrada.</li> }</ul>
+          }
+        </section>
+        <section class="card" id="explorar">
+          <h2>Explorar instituições</h2>
+          <p class="meta">Conheça outras instituições da rede e suas campanhas abertas.</p>
+          <form #exp class="search" (submit)="$event.preventDefault(); explorar(exp)">
+            <input name="q" maxlength="160" placeholder="Buscar instituição" aria-label="Buscar instituição">
+            <button class="ghost">Buscar</button>
+          </form>
+          @if (carregandoExplorar()) {
+            <div class="skel sk-row"></div><div class="skel sk-row"></div>
+          } @else {
+            @for (inst of instituicoesPublicas(); track inst.id) {
+              <div class="subcard">
+                <div class="need-row"><strong>{{ inst.nome }}</strong>
+                  <a class="link" [href]="'https://' + inst.hostname" target="_blank" rel="noopener noreferrer">Visitar →</a>
+                </div>
+                <ul class="dir">@for (c of inst.campanhas; track c.id) {
+                  <li>{{ c.titulo }} <span class="meta">· {{ c.itens }} item(ns)</span></li>
+                }</ul>
+              </div>
+            } @empty { <p class="muted">Nenhuma instituição com campanha aberta encontrada.</p> }
           }
         </section>
         <details class="accordion" id="cadastrar"><summary>Cadastrar minha instituição</summary>
@@ -285,9 +323,9 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
   `,
   styles: [`
     :host{
-      --bg:#081020;--surface:#0e1b30;--surface-2:#13223b;
-      --line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.16);
-      --text:#eef4fb;--muted:#93a7c2;
+      --bg:#13213a;--surface:#1a2c4a;--surface-2:#213656;
+      --line:rgba(255,255,255,.09);--line-2:rgba(255,255,255,.18);
+      --text:#f1f5fb;--muted:#a3b4cc;
       --gold:#2bc4e6;--gold-2:#5fd4ef;
       --green:#7dd3fc;--green-2:#a9e4fd;--green-soft:rgba(56,189,248,.14);
       --amber:#d9a441;--danger:#e68b82;--radius:18px;
@@ -297,10 +335,11 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
     @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
     .page{min-height:100vh;display:flex;flex-direction:column;
       background:
-        radial-gradient(1100px 560px at 50% -14%, rgba(56,189,248,.16), transparent 62%),
-        radial-gradient(780px 480px at 90% 4%, rgba(43,196,230,.08), transparent 55%),
+        radial-gradient(1100px 560px at 50% -14%, rgba(110,190,240,.16), transparent 62%),
+        radial-gradient(780px 480px at 90% 4%, rgba(255,196,150,.06), transparent 55%),
+        radial-gradient(900px 600px at 0% 100%, rgba(120,170,230,.07), transparent 60%),
         var(--bg);}
-    .topbar{position:sticky;top:0;z-index:5;background:rgba(10,19,36,.78);
+    .topbar{position:sticky;top:0;z-index:5;background:rgba(19,33,58,.82);
       backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
     .topbar .inner{max-width:880px;margin:0 auto;padding:.8rem 1.25rem;display:flex;align-items:center;gap:.7rem}
     .mark{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;flex:none;
@@ -325,10 +364,10 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
     .hero{padding:1.8rem 0 .5rem}
     .banner{position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--line);
       min-height:300px;display:flex;align-items:flex-end;animation:rise .55s ease both;
-      box-shadow:0 22px 50px rgba(0,0,0,.4)}
+      box-shadow:0 22px 50px rgba(5,12,25,.3)}
     .banner-art{position:absolute;inset:0;width:100%;height:100%}
     .banner-text{position:relative;width:100%;padding:1.7rem 1.7rem 1.9rem;box-sizing:border-box;
-      background:linear-gradient(to top, rgba(8,16,32,.93) 12%, rgba(8,16,32,.35) 58%, transparent)}
+      background:linear-gradient(to top, rgba(19,33,58,.92) 12%, rgba(19,33,58,.35) 58%, transparent)}
     .banner-text .lede{max-width:48ch}
     @media (max-width:560px){ .banner{min-height:240px} .banner-text{padding:1.3rem 1.2rem 1.4rem} }
     .como{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin:.4rem 0 .6rem}
@@ -347,10 +386,10 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
     .stat .num{display:block;font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.75rem;line-height:1;color:var(--green-2)}
     .stat .lbl{display:block;margin-top:.35rem;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.09em}
     @media (max-width:560px){ .stats{gap:.5rem} .stat{padding:.7rem .75rem} .stat .num{font-size:1.4rem} }
-    .card{background:linear-gradient(180deg,var(--surface),#0c1829);border:1px solid var(--line);
+    .card{background:linear-gradient(180deg,var(--surface),#172741);border:1px solid var(--line);
       border-radius:var(--radius);padding:1.3rem;margin:1.1rem 0;
       transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;animation:rise .5s ease both}
-    .card:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:0 18px 40px rgba(0,0,0,.35)}
+    .card:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:0 18px 40px rgba(5,12,25,.28)}
     h2{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:1.5rem;margin:0 0 .5rem}
     h3{font-size:.76rem;text-transform:uppercase;letter-spacing:.15em;color:var(--green-2);
       font-weight:600;margin:1.5rem 0 .7rem}
@@ -374,7 +413,7 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
     .row-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin:.7rem 0}
     label{display:block;margin:.6rem 0;color:var(--muted);font-size:.9rem}
     input,textarea{display:block;width:100%;box-sizing:border-box;margin-top:.3rem;
-      background:#1c3052;color:var(--text);border:1px solid var(--line-2);border-radius:12px;
+      background:#26406a;color:var(--text);border:1px solid var(--line-2);border-radius:12px;
       padding:.62rem .78rem;font:inherit;transition:border-color .15s,box-shadow .15s}
     input::placeholder{color:#8ea3bf}
     input[type=checkbox]{width:auto;display:inline-block;margin:0 .45rem 0 0;vertical-align:middle;accent-color:var(--gold)}
@@ -384,7 +423,7 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
     fieldset{border:1px dashed var(--line-2);border-radius:12px;padding:.4rem .85rem .7rem;margin:.65rem 0}
     form{margin:.5rem 0}
     .search{display:flex;gap:.5rem;align-items:center}
-    .search input{flex:1;margin-top:0;background-color:#1c3052;
+    .search input{flex:1;margin-top:0;background-color:#26406a;
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2393a7c2' stroke-width='2' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
       background-repeat:no-repeat;background-position:.75rem center;padding-left:2.2rem}
     .search button{flex:none}
@@ -406,6 +445,12 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
     .bar>span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#1b9fd8,var(--gold));transition:width .5s ease}
     .selos{display:inline-flex;gap:.35rem;flex-wrap:wrap;margin-top:.35rem}
     .selo{font-size:.7rem;font-weight:600;padding:.14rem .55rem;border-radius:999px;background:var(--green-soft);color:var(--green-2)}
+    .rank-name .selos{display:flex;margin-top:.3rem}
+    .link{color:var(--green-2);text-decoration:none;font-weight:600;font-size:.9rem}
+    .link:hover{text-decoration:underline}
+    .filtros{display:flex;gap:.4rem;flex-wrap:wrap;margin:.4rem 0 .6rem}
+    .filtros button{padding:.4rem .9rem;font-size:.85rem;box-shadow:none}
+    .filtros button.ativo{background:var(--green-soft);color:var(--green-2);border-color:rgba(125,211,252,.45)}
     .skel{position:relative;overflow:hidden;background:var(--surface-2);border:1px solid var(--line);border-radius:12px}
     .skel::after{content:'';position:absolute;inset:0;transform:translateX(-100%);
       background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);animation:shimmer 1.3s infinite}
@@ -416,7 +461,7 @@ interface Empresa { nome: string; confirmadas: number; selos: string[] }
     .sk-line-lg{height:30px;width:55%}
     .sk-row{height:46px;margin:.5rem 0}
     .codebox{font-family:ui-monospace,'Cascadia Code',monospace;word-break:break-all;
-      background:#16273f;border:1px dashed var(--gold);border-radius:12px;padding:.7rem .85rem;color:var(--gold-2)}
+      background:#1f3456;border:1px dashed var(--gold);border-radius:12px;padding:.7rem .85rem;color:var(--gold-2)}
     details.accordion{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);margin:1.1rem 0;overflow:hidden}
     details.accordion>summary{cursor:pointer;padding:1rem 1.25rem;font-weight:600;list-style:none;display:flex;align-items:center}
     details.accordion>summary::-webkit-details-marker{display:none}
@@ -458,6 +503,22 @@ class App {
   readonly empresas = signal<Empresa[]>([]);
   readonly carregandoCatalogo = signal(true);
   readonly carregandoEmpresas = signal(true);
+  readonly instituicoesPublicas = signal<InstPublica[]>([]);
+  readonly carregandoExplorar = signal(true);
+  readonly filtroDoacoes = signal<'todas' | 'pendentes' | 'recebidas'>('todas');
+  readonly doacoesFiltradas = computed(() => {
+    const lista = this.doacoes() ?? [];
+    const filtro = this.filtroDoacoes();
+    return filtro === 'todas' ? lista : lista.filter(d => (filtro === 'recebidas') === !!d.recebida);
+  });
+  readonly resumoPainel = computed(() => {
+    const lista = this.doacoes() ?? [];
+    const recebidas = lista.filter(d => d.recebida).length;
+    return {
+      campanhas: (this.campanhas() ?? []).filter(c => c.publicada && !c.encerrada).length,
+      intencoes: lista.length, recebidas, pendentes: lista.length - recebidas
+    };
+  });
   readonly retorno = signal('');
   readonly retornoErro = signal(false);
   readonly ocupado = signal(false);
@@ -557,6 +618,34 @@ class App {
     });
   }
 
+  selosDe(nome: string) { return this.empresas().find(e => e.nome === nome)?.selos ?? []; }
+
+  explorar(form?: HTMLFormElement) {
+    const q = form ? String(new FormData(form).get('q') ?? '') : '';
+    this.http.get<InstPublica[]>('/api/explorar', { params: { q } }).subscribe({
+      next: dados => { this.instituicoesPublicas.set(dados); this.carregandoExplorar.set(false); },
+      error: () => this.carregandoExplorar.set(false)
+    });
+  }
+
+  exportarCsv() {
+    const celula = (valor: unknown) => {
+      let texto = String(valor ?? '');
+      if (/^[=+\-@\t\r]/.test(texto)) texto = "'" + texto;
+      return '"' + texto.replace(/"/g, '""') + '"';
+    };
+    const linhas = [['Campanha', 'Item', 'Quantidade', 'Nome', 'Contato', 'Situação']]
+      .concat((this.doacoes() ?? []).map(d => [d.campanha, d.item, String(d.quantidade), d.nome, d.contato,
+        d.recebida ? 'Recebida' : 'Pendente']));
+    const csv = '﻿' + linhas.map(l => l.map(celula).join(';')).join('\r\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'intencoes-de-doacao.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   private carregarEmpresas() {
     this.http.get<RankItem[]>('/api/ranking').subscribe({ next: dados => this.ranking.set(dados), error: () => {} });
     this.http.get<Empresa[]>('/api/empresas').subscribe({
@@ -645,6 +734,7 @@ class App {
 
   constructor() {
     this.carregarEmpresas();
+    this.explorar();
     void this.carregarPainel().catch(() => {});
     this.http.get<Catalogo>('/api/campanhas').subscribe({
       next: dados => { this.catalogo.set(dados); this.carregandoCatalogo.set(false); document.title = dados.instituicao + ' · Elo Brasil Solidário'; },

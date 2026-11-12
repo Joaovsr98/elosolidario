@@ -47,6 +47,32 @@ export async function cadastro(req, res, db, json) {
   }
 }
 
+export async function explorar(req, res, db, json) {
+  const reject = (status, erro) => json(res, status, { erro });
+  if (req.method !== 'GET') return reject(405, 'Método indisponível');
+  const q = (new URL(req.url, 'http://localhost').searchParams.get('q') ?? '').trim().slice(0, 160);
+  const [rows] = await db.execute(`
+    SELECT i.id, i.nome, i.hostname, c.id AS campanha_id, c.titulo,
+           (SELECT COUNT(*) FROM necessidade n WHERE n.campanha_id = c.id) AS itens
+    FROM instituicao i
+    JOIN campanha c ON c.instituicao_id = i.id
+      AND c.publicada_em <= UTC_TIMESTAMP(6)
+      AND (c.encerrada_em IS NULL OR c.encerrada_em > UTC_TIMESTAMP(6))
+    WHERE i.aprovada_em IS NOT NULL AND i.hostname IS NOT NULL
+      AND (? = '' OR i.nome LIKE CONCAT('%', ?, '%'))
+    ORDER BY i.nome, c.id DESC
+    LIMIT 200
+  `, [q, q]);
+  const instituicoes = new Map();
+  for (const row of rows) {
+    if (!instituicoes.has(row.id)) instituicoes.set(row.id, {
+      id: row.id, nome: row.nome, hostname: row.hostname, campanhas: []
+    });
+    instituicoes.get(row.id).campanhas.push({ id: row.campanha_id, titulo: row.titulo, itens: Number(row.itens) });
+  }
+  return json(res, 200, [...instituicoes.values()]);
+}
+
 export async function admin(req, res, db, json, path) {
   const reject = (status, erro) => json(res, status, { erro });
   const host = (req.headers.host ?? '').toLowerCase().replace(/:\d+$/, '');
