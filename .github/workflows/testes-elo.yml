@@ -1,0 +1,68 @@
+name: Testar Elo Brasil Solidário
+
+on:
+  pull_request:
+    paths:
+      - 'tests/**'
+      - '.github/workflows/testes-elo.yml'
+      - 'frontend/**'
+      - '*.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'backend/src/main/resources/db/migration/**'
+      - 'angular.json'
+      - 'tsconfig.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: elo-regressao-ci
+  cancel-in-progress: true
+
+jobs:
+  regressao:
+    name: Testes API, MySQL e Angular
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-only-password
+          MYSQL_DATABASE: elo_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -pci-only-password"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      TEST_MYSQL_URL: mysql://root:ci-only-password@127.0.0.1:3306/elo_ci
+      ELO_ADMIN_KEY: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Instalar dependências
+        run: npm ci
+      - name: Validar sintaxe do backend
+        run: |
+          node --check server.mjs
+          node --check doacoes.mjs
+          node --check instituicoes.mjs
+          node --check empresas.mjs
+      - name: Testar LGPD, doações, autenticação e isolamento
+        run: node --test tests/elo-api.test.mjs
+      - name: Testar migrations e constraints em MySQL 8 descartável
+        run: node tests/mysql-smoke.mjs
+      - name: Compilar frontend Angular
+        run: npm run build
+      - name: Auditoria de dependências de produção
+        run: npm audit --omit=dev --audit-level=high
