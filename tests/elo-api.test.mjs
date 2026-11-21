@@ -34,9 +34,11 @@ async function run(handler, { method = 'GET', path = '/', data, headers = {}, in
   };
   const res = { headers: {}, setHeader(n, v) { this.headers[n.toLowerCase()] = v; } };
   const json = (response, status, payload) => ({ status, payload });
+  // O roteador real fornece apenas URL.pathname ao handler, sem a query string.
+  const routePath = new URL(path, 'http://localhost').pathname;
   let result;
-  if (handler === donations) result = await handler(req, res, db, json, path, hostname, institution);
-  else if (handler === admin || handler === empresas) result = await handler(req, res, db, json, path);
+  if (handler === donations) result = await handler(req, res, db, json, routePath, hostname, institution);
+  else if (handler === admin || handler === empresas) result = await handler(req, res, db, json, routePath);
   else result = await handler(req, res, db, json);
   return { ...result, headers: res.headers };
 }
