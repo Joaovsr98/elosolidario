@@ -32,7 +32,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
             <a href="#explorar">Instituições</a>
             <a href="#empresas">Empresas</a>
             <a href="#cadastrar">Cadastrar instituição</a>
-            <a href="#painel">Entrar</a>
+            <a href="#painel" aria-label="Entrar na área da instituição">Entrar</a>
           </nav>
         </div>
       </header>
@@ -62,9 +62,8 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
               <ul class="needs">@for (item of campanha.itens; track item.id) {
                 <li>
                   <div class="item-info">
-                    <div class="need-row"><strong>{{ item.nome }}</strong><span class="meta">{{ item.recebido || 0 }} / {{ item.meta }} {{ item.unidade }}</span></div>
+                    <div class="need-row"><strong>{{ item.nome }}</strong><span class="meta">{{ item.recebido || 0 }} de {{ item.meta }} {{ item.unidade }}</span></div>
                     <div class="bar" role="progressbar" [attr.aria-label]="'Arrecadação de ' + item.nome" [attr.aria-valuenow]="pct(item)" aria-valuemin="0" aria-valuemax="100"><span [style.width.%]="pct(item)"></span></div>
-                    <p class="meta item-received">{{ item.recebido || 0 }} recebidos de {{ item.meta }} previstos</p>
                   </div>
                   <details class="donation-form"><summary>Oferecer doação</summary>
                     <form #form (submit)="$event.preventDefault(); doar(item.id, form)">
@@ -557,7 +556,6 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
     .campaign .needs>li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.75rem 2rem;align-items:center;border:0;padding:.65rem 0}
     .campaign .needs>li+li{border-top:1px solid var(--line)}
     .item-info{min-width:0}
-    .item-received{font-size:.8rem;margin:.3rem 0 0}
     .campaign .donation-form{margin:0}
     .campaign .donation-form>summary{display:inline-flex;align-items:center;background:var(--gold-2);color:#fff;border-radius:4px;padding:.6rem 1rem;white-space:nowrap}
     .campaign .donation-form>summary::before{content:none}
