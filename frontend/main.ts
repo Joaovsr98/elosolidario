@@ -32,7 +32,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
             <a href="#explorar">Instituições</a>
             <a href="#empresas">Empresas</a>
             <a href="#cadastrar">Cadastrar instituição</a>
-            <a href="#painel">Área da instituição</a>
+            <a href="#painel" aria-label="Entrar na área da instituição">Entrar</a>
           </nav>
         </div>
       </header>
@@ -44,32 +44,28 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
           </p>
         }
         @if (catalogo(); as dados) {
-          <section class="hero institution-head">
-            <div class="banner">
-              <div class="banner-text">
-                <h1>{{ dados.instituicao }}</h1>
-                <p class="lede">Veja o que a instituição precisa e escolha o que você pode doar.</p>
-                <a class="btn" href="#campanhas-abertas">Ver campanhas</a>
-              </div>
-            </div>
-            <dl class="institution-stats">
-              <div><dt>Campanhas abertas</dt><dd>{{ dados.campanhas.length }}</dd></div>
-              <div><dt>Tipos de itens solicitados</dt><dd>{{ itensAbertos() }}</dd></div>
-              <div><dt>Empresas doadoras</dt><dd>{{ empresas().length }}</dd></div>
-            </dl>
+          <section class="institution-head">
+            <h1>{{ dados.instituicao }}</h1>
+            <p class="institution-info">
+              {{ dados.campanhas.length }} {{ dados.campanhas.length === 1 ? 'campanha aberta' : 'campanhas abertas' }}
+              <span aria-hidden="true">·</span>
+              {{ itensAbertos() }} {{ itensAbertos() === 1 ? 'tipo de item solicitado' : 'tipos de itens solicitados' }}
+            </p>
           </section>
-          <div class="catalog-layout">
-            <section id="campanhas-abertas" class="campaign-list" aria-labelledby="campaign-heading">
-              <h2 id="campaign-heading" class="section-heading">Campanhas abertas</h2>
+          <section id="campanhas-abertas" class="campaign-list" aria-labelledby="campaign-heading">
+            <h2 id="campaign-heading" class="section-heading">O que estamos arrecadando</h2>
+            <p class="delivery-note">Informe o que pode doar. A instituição combina a entrega com você. Não é necessário criar uma conta.</p>
           @for (campanha of dados.campanhas; track campanha.id) {
-            <article class="card">
-              <h2>{{ campanha.titulo }}</h2>
+            <article class="campaign">
+              <h3>{{ campanha.titulo }}</h3>
               <p class="muted">{{ campanha.descricao }}</p>
               <ul class="needs">@for (item of campanha.itens; track item.id) {
                 <li>
-                  <div class="need-row"><strong>{{ item.nome }}</strong><span class="meta">{{ item.recebido || 0 }} de {{ item.meta }} {{ item.unidade }} recebidos</span></div>
-                  <div class="bar"><span [style.width.%]="pct(item)"></span></div>
-                  <details><summary>Quero doar</summary>
+                  <div class="item-info">
+                    <div class="need-row"><strong>{{ item.nome }}</strong><span class="meta">{{ item.recebido || 0 }} de {{ item.meta }} {{ item.unidade }}</span></div>
+                    <div class="bar" role="progressbar" [attr.aria-label]="'Arrecadação de ' + item.nome" [attr.aria-valuenow]="pct(item)" aria-valuemin="0" aria-valuemax="100"><span [style.width.%]="pct(item)"></span></div>
+                  </div>
+                  <details class="donation-form"><summary>Oferecer doação</summary>
                     <form #form (submit)="$event.preventDefault(); doar(item.id, form)">
                       <label>Nome <input name="nome" required maxlength="160"></label>
                       <label>Contato <input name="contato" required maxlength="255"></label>
@@ -77,7 +73,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
                       <p class="meta nota">O nome da empresa poderá aparecer na lista pública de doadores. Valores e quantidades não serão exibidos.</p>
                       <label>Quantidade <input name="quantidade" type="number" min="1" max="1000000" required></label>
                       <label class="check"><input type="checkbox" name="consentimento" required> Concordo com o uso do meu nome e contato para intermediar esta doação (LGPD). <a class="link" href="#privacidade" (click)="abrirPrivacidade()">Ver política</a></label>
-                      <button [disabled]="ocupado()">Enviar pedido de doação</button>
+                      <button [disabled]="ocupado()">Enviar</button>
                     </form>
                   </details>
                 </li>
@@ -85,15 +81,6 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
             </article>
           } @empty { <p class="muted">Não há campanhas abertas no momento.</p> }
             </section>
-            <aside class="donation-guide" aria-labelledby="guide-heading">
-              <h2 id="guide-heading">Como doar</h2>
-              <ol>
-                <li>Escolha um item da campanha.</li>
-                <li>Informe a quantidade e seus dados de contato. Não é preciso criar uma conta.</li>
-                <li>A instituição entra em contato para combinar a entrega e confirmar o recebimento.</li>
-              </ol>
-            </aside>
-          </div>
           <section class="card" id="painel">
             
             <h2>Painel da instituição</h2>
@@ -215,7 +202,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
         <section class="card" id="empresas">
           <h2>Empresas doadoras</h2>
           <div class="need-row ranking-head">
-            <h3>Top 10 do trimestre</h3>
+            <h3>Ranking trimestral</h3>
             <select class="sel" aria-label="Trimestre do ranking" (change)="mudarTrimestre($any($event.target).value)">
               @for (op of opcoesTrimestre(); track op.chave) {
                 <option [value]="op.chave" [selected]="op.chave === trimestreSel()">{{ op.rotulo }}</option>
@@ -231,7 +218,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
                 </span><span class="meta">{{ empresa.pontos }} confirmada(s)</span></li>
             } @empty { <li class="empty">Ainda sem doações confirmadas neste trimestre.</li> }</ol>
           }
-          <h3>Empresas que já doaram</h3>
+          <h3>Lista de doadores</h3>
           <p class="meta">Pesquise pelo nome da empresa.</p>
           <form #busca class="search" (submit)="$event.preventDefault(); buscarEmpresas(busca)">
             <input name="q" maxlength="160" placeholder="Buscar empresa" aria-label="Buscar empresa">
@@ -248,7 +235,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
           }
         </section>
         <section class="card" id="explorar">
-          <h2>Explorar instituições</h2>
+          <h2>Instituições</h2>
           <p class="meta">Encontre instituições que estão recebendo doações.</p>
           <form #exp class="search" (submit)="$event.preventDefault(); explorar(exp)">
             <input name="q" maxlength="160" placeholder="Buscar instituição ou campanha" aria-label="Buscar instituição ou campanha">
@@ -549,53 +536,56 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
       outline:2px solid var(--green);outline-offset:2px}
     @media (prefers-reduced-motion:reduce){ .card,.hero,.banner,.stat,.passo{animation:none} .card:hover{transform:none} .skel::after{animation:none} }
 
-    /* Layout editorial: campanhas primeiro, apoio lateral e superfícies discretas. */
+    /* Conteúdo público e navegação */
     .topbar{background:var(--surface);backdrop-filter:none}
-    .topbar .inner,main,.foot-inner{padding-inline:clamp(1rem,4vw,4rem);box-sizing:border-box}
-    .topbar .inner{min-height:68px}
+    .topbar .inner,main,.foot-inner{padding-inline:clamp(1rem,3vw,3rem);box-sizing:border-box}
+    .topbar .inner{min-height:58px}
     .mark{border-radius:4px;background:transparent}
     .brand{letter-spacing:0}
-    main{padding-top:1.5rem}
-    .institution-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,30%);gap:clamp(1.5rem,4vw,4rem);align-items:start;padding:2.5rem 0;border-bottom:1px solid var(--line-2)}
-    .banner{display:block;min-height:0;border:0;border-radius:0;box-shadow:none;overflow:visible}
-    .banner-text{padding:0;background:none}
-    .banner-text h1{font-size:clamp(2rem,4vw,3.2rem);line-height:1.12;overflow-wrap:anywhere;max-width:22ch;margin:0 0 .8rem}
-    .banner-text .lede{max-width:50ch}
-    .banner-text .btn{margin-top:1.3rem;text-decoration:none}
-    .institution-stats{margin:0;padding:0 0 0 1.5rem;border-left:1px solid var(--line-2)}
-    .institution-stats div{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;padding:.65rem 0;border-bottom:1px solid var(--line)}
-    .institution-stats div:last-child{border-bottom:0}
-    .institution-stats dt{font-size:.95rem;color:var(--muted)}
-    .institution-stats dd{font-size:1.45rem;font-weight:600;margin:0;color:var(--green-2);font-variant-numeric:tabular-nums}
-    .catalog-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,30%);gap:clamp(1.5rem,4vw,4rem);align-items:start;padding:2rem 0 1.5rem}
-    .campaign-list{min-width:0}
-    .section-heading{font-size:1.75rem;margin:0 0 1rem}
-    .donation-guide{border-top:3px solid var(--green-2);padding:1rem 0 0}
-    .donation-guide h2{font-size:1.35rem}
-    .donation-guide ol{padding-left:1.3rem;color:var(--muted);margin:.8rem 0;line-height:1.6}
-    .donation-guide li{padding-left:.25rem;margin:.65rem 0}
-    .card{background:var(--surface);border:1px solid var(--line);border-radius:6px;box-shadow:none;padding:clamp(1rem,2vw,1.75rem);animation:none;transition:none}
-    .card:hover{transform:none;border-color:var(--line);box-shadow:none}
-    .campaign-list .card{margin:0 0 1rem}
+    main{padding-top:1.4rem}
+    .institution-head{padding:0 0 1.4rem}
+    .institution-head h1{font-size:clamp(1.85rem,3vw,2.65rem);line-height:1.15;overflow-wrap:anywhere;margin:0 0 .4rem}
+    .institution-info{font-size:.9rem;color:var(--muted);margin:0}
+    .institution-info span{margin:0 .35rem}
+    .campaign-list{min-width:0;padding:0 0 1.2rem}
+    .section-heading{font-size:1.45rem;margin:0 0 .3rem}
+    .delivery-note{color:var(--muted);font-size:.95rem;max-width:80ch;margin:0 0 1rem}
+    .campaign{padding:1.15rem 1.4rem;background:var(--surface);border-radius:4px;margin:0 0 .85rem}
+    .campaign h3{font-family:'Fraunces',Georgia,serif;font-size:1.3rem;color:var(--text);letter-spacing:0;text-transform:none;margin:0 0 .2rem}
+    .campaign .needs{margin:1rem 0 0;gap:0}
+    .campaign .needs>li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.75rem 2rem;align-items:center;border:0;padding:.65rem 0}
+    .campaign .needs>li+li{border-top:1px solid var(--line)}
+    .item-info{min-width:0}
+    .campaign .donation-form{margin:0}
+    .campaign .donation-form>summary{display:inline-flex;align-items:center;background:var(--gold-2);color:#fff;border-radius:4px;padding:.6rem 1rem;white-space:nowrap}
+    .campaign .donation-form>summary::before{content:none}
+    .campaign .donation-form[open]>summary{background:var(--surface-2);color:var(--green-2)}
+    .campaign .needs>li:has(.donation-form[open]){grid-template-columns:1fr}
+    .campaign .donation-form form{max-width:620px;margin-top:1rem}
+    main>.card{background:transparent;border:0;border-radius:0;padding:1.2rem 0;margin:1.2rem 0;box-shadow:none;animation:none;transition:none}
+    .card:hover{transform:none;box-shadow:none}
+    main>.card>form:not(.search){max-width:580px}
     .subcard,ul.needs>li,ul.dir>li,ol.rank>li{border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;padding:.8rem 0}
-    .stat{background:transparent;border:0;border-left:2px solid var(--line-2);border-radius:0;animation:none}
+    .stat{background:transparent;border:0;border-radius:0;animation:none}
     .stat .lbl,h3,.eyebrow{letter-spacing:0;text-transform:none}
     h3{font-size:1rem}
-    button,.btn{background:var(--gold-2);border-radius:5px;box-shadow:none}
-    input,textarea,.sel,fieldset{border-radius:5px}
+    button,.btn{background:var(--gold-2);border-radius:4px;box-shadow:none}
+    input,textarea,.sel,fieldset{border-radius:4px}
     .bar,.bar>span{border-radius:2px}
     .bar>span{background:var(--green)}
     .banner,.passo,.stat{animation:none}
-    .toast{box-shadow:none;border-radius:6px}
-    .sk-banner{height:180px;border-radius:6px}
+    .toast{box-shadow:none;border-radius:4px}
+    .sk-banner{height:100px;border-radius:4px}
     .skel::after{animation:none}
     .search input{min-width:0}
+    .search{max-width:720px}
+    details.accordion{background:transparent;border:0;border-radius:0;margin:.5rem 0}
+    details.accordion>summary{padding:.8rem 0}
+    .acc-body{padding:.5rem 0 1rem}
     @media(max-width:760px){
-      .institution-head,.catalog-layout{grid-template-columns:1fr;gap:1.5rem}
-      .institution-head{padding:1.25rem 0}
-      .institution-stats{border-left:0;padding:0}
-      .catalog-layout{padding:1.5rem 0}
-      .donation-guide{margin-top:.5rem}
+      .institution-head{padding:0 0 1rem}
+      .campaign{padding:1rem}
+      .campaign .needs>li{grid-template-columns:1fr;gap:.6rem}
       .topbar .inner{flex-wrap:wrap;gap:.5rem}
       .nav{margin-left:0;width:100%;flex-wrap:wrap;gap:.5rem 1rem}
       .stats{grid-template-columns:repeat(auto-fit,minmax(105px,1fr))}
@@ -666,7 +656,7 @@ class App {
       consentimento: dados.get('consentimento') != null
     }, async () => {
       form.reset();
-      this.retorno.set('Pedido de doação enviado. Aguarde o contato da instituição.');
+      this.retorno.set('Doação informada. A instituição entrará em contato para combinar a entrega.');
     });
   }
 
