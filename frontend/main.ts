@@ -49,7 +49,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
               <svg class="banner-art" viewBox="0 0 800 360" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
                 <defs>
                   <radialGradient id="bg" cx="28%" cy="26%" r="90%">
-                    <stop offset="0%" stop-color="#28496f"/><stop offset="100%" stop-color="#15263f"/>
+                    <stop offset="0%" stop-color="#e9f1f2"/><stop offset="100%" stop-color="#c7dce1"/>
                   </radialGradient>
                   <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
                     <feGaussianBlur stdDeviation="5" result="b"/>
@@ -57,7 +57,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
                   </filter>
                 </defs>
                 <rect width="800" height="360" fill="url(#bg)"/>
-                <g stroke="#38bdf8" stroke-opacity="0.22" stroke-width="1.2">
+                <g stroke="#6e9ca8" stroke-opacity="0.22" stroke-width="1.2">
                   <line x1="120" y1="90" x2="210" y2="160"/><line x1="210" y1="160" x2="90" y2="240"/>
                   <line x1="210" y1="160" x2="340" y2="180"/><line x1="260" y1="70" x2="340" y2="180"/>
                   <line x1="340" y1="180" x2="430" y2="110"/><line x1="340" y1="180" x2="300" y2="280"/>
@@ -67,13 +67,13 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
                   <line x1="640" y1="90" x2="730" y2="120"/><line x1="90" y1="240" x2="200" y2="320"/>
                   <line x1="300" y1="280" x2="380" y2="320"/><line x1="430" y1="110" x2="640" y2="90"/>
                 </g>
-                <g fill="#7dd3fc" fill-opacity="0.9">
+                <g fill="#739ca5" fill-opacity="0.9">
                   <circle cx="120" cy="90" r="4"/><circle cx="210" cy="160" r="4"/><circle cx="260" cy="70" r="3"/>
                   <circle cx="300" cy="280" r="4"/><circle cx="430" cy="110" r="4"/><circle cx="560" cy="160" r="4"/>
                   <circle cx="540" cy="300" r="3"/><circle cx="700" cy="210" r="5"/><circle cx="660" cy="310" r="4"/>
                   <circle cx="730" cy="120" r="3"/><circle cx="200" cy="320" r="4"/><circle cx="380" cy="320" r="3"/>
                 </g>
-                <g fill="#67e8f9" filter="url(#glow)">
+                <g fill="#54818c" filter="url(#glow)">
                   <circle cx="90" cy="240" r="6"/><circle cx="340" cy="180" r="7"/>
                   <circle cx="470" cy="240" r="6"/><circle cx="640" cy="90" r="6"/>
                 </g>
@@ -394,27 +394,27 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
   `,
   styles: [`
     :host{
-      --bg:#13213a;--surface:#1a2c4a;--surface-2:#213656;
-      --line:rgba(255,255,255,.09);--line-2:rgba(255,255,255,.18);
-      --text:#f1f5fb;--muted:#a3b4cc;
-      --gold:#2bc4e6;--gold-2:#5fd4ef;
-      --green:#7dd3fc;--green-2:#a9e4fd;--green-soft:rgba(56,189,248,.14);
-      --amber:#d9a441;--danger:#e68b82;--radius:18px;
+      --bg:#f7f5f0;--surface:#ffffff;--surface-2:#f2f5f5;
+      --line:#dce4e5;--line-2:#9aafb5;
+      --text:#20363f;--muted:#52656c;
+      --gold:#176d83;--gold-2:#14566a;
+      --green:#287e79;--green-2:#235f63;--green-soft:#e0eeec;
+      --amber:#865b16;--danger:#9e3936;--radius:18px;
       display:block;color:var(--text);line-height:1.55;
       font-family:'DM Sans',system-ui,sans-serif;
     }
     @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
     .page{min-height:100vh;display:flex;flex-direction:column;
       background:
-        radial-gradient(1100px 560px at 50% -14%, rgba(110,190,240,.16), transparent 62%),
-        radial-gradient(780px 480px at 90% 4%, rgba(255,196,150,.06), transparent 55%),
-        radial-gradient(900px 600px at 0% 100%, rgba(120,170,230,.07), transparent 60%),
+        radial-gradient(1100px 560px at 50% -14%, rgba(139,179,189,.14), transparent 62%),
+        radial-gradient(780px 480px at 90% 4%, rgba(223,206,175,.18), transparent 55%),
+        radial-gradient(900px 600px at 0% 100%, rgba(139,179,189,.09), transparent 60%),
         var(--bg);}
-    .topbar{position:sticky;top:0;z-index:5;background:rgba(19,33,58,.82);
+    .topbar{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.94);
       backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
     .topbar .inner{max-width:880px;margin:0 auto;padding:.8rem 1.25rem;display:flex;align-items:center;gap:.7rem}
     .mark{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;flex:none;
-      border:1px solid var(--gold);color:var(--gold);background:rgba(207,169,104,.08);
+      border:1px solid var(--gold);color:var(--gold);background:#eaf1f2;
       font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.15rem}
     .brand{font-weight:700;letter-spacing:.2px;line-height:1.1}
     .brand small{display:block;font-weight:500;font-size:.68rem;color:var(--muted);
@@ -432,22 +432,22 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
     .toast{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);z-index:30;
       width:min(560px,calc(100% - 2rem));box-sizing:border-box;margin:0;padding:.8rem 1rem;
       display:flex;align-items:flex-start;gap:.75rem;border-radius:14px;font-weight:500;
-      background:#1c3a5e;border:1px solid rgba(125,211,252,.5);color:#dff3ff;
-      box-shadow:0 14px 36px rgba(5,12,25,.4)}
-    .toast.erro{background:#4a2a33;border-color:rgba(230,139,130,.6);color:#ffe0dc}
+      background:#e4f1ee;border:1px solid #9abdb5;color:#245850;
+      box-shadow:0 14px 36px rgba(32,54,63,.15)}
+    .toast.erro{background:#fae9e7;border-color:#d7a19b;color:#8e302e}
     .toast .fechar{margin-left:auto;background:none;box-shadow:none;color:inherit;padding:0 .25rem;
       font-size:1.25rem;line-height:1;border-radius:6px}
-    .toast .fechar:hover:not(:disabled){filter:none;background:rgba(255,255,255,.1)}
+    .toast .fechar:hover:not(:disabled){filter:none;background:rgba(32,54,63,.07)}
     .pular{position:absolute;left:1rem;top:-3rem;z-index:40;background:var(--surface);color:var(--text);
       padding:.5rem .9rem;border-radius:10px;border:1px solid var(--line-2);text-decoration:none}
     .pular:focus{top:.6rem}
     .hero{padding:1.8rem 0 .5rem}
     .banner{position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--line);
       min-height:300px;display:flex;align-items:flex-end;animation:rise .55s ease both;
-      box-shadow:0 22px 50px rgba(5,12,25,.3)}
+      box-shadow:0 22px 50px rgba(32,54,63,.10)}
     .banner-art{position:absolute;inset:0;width:100%;height:100%}
     .banner-text{position:relative;width:100%;padding:1.7rem 1.7rem 1.9rem;box-sizing:border-box;
-      background:linear-gradient(to top, rgba(19,33,58,.92) 12%, rgba(19,33,58,.35) 58%, transparent)}
+      background:linear-gradient(to top, rgba(247,245,240,.98) 12%, rgba(247,245,240,.88) 48%, rgba(247,245,240,.12) 100%)}
     .banner-text .lede{max-width:48ch}
     @media (max-width:560px){ .banner{min-height:240px} .banner-text{padding:1.3rem 1.2rem 1.4rem} }
     .como{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin:.4rem 0 .6rem}
@@ -466,10 +466,10 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
     .stat .num{display:block;font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.75rem;line-height:1;color:var(--green-2)}
     .stat .lbl{display:block;margin-top:.35rem;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.09em}
     @media (max-width:560px){ .stats{gap:.5rem} .stat{padding:.7rem .75rem} .stat .num{font-size:1.4rem} }
-    .card{background:linear-gradient(180deg,var(--surface),#172741);border:1px solid var(--line);
+    .card{background:linear-gradient(180deg,var(--surface),#fafcfc);border:1px solid var(--line);
       border-radius:var(--radius);padding:1.3rem;margin:1.1rem 0;
       transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;animation:rise .5s ease both}
-    .card:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:0 18px 40px rgba(5,12,25,.28)}
+    .card:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:0 18px 40px rgba(32,54,63,.10)}
     h2{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:1.5rem;margin:0 0 .5rem}
     h3{font-size:.76rem;text-transform:uppercase;letter-spacing:.15em;color:var(--green-2);
       font-weight:600;margin:1.5rem 0 .7rem}
@@ -484,18 +484,18 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
     ul.needs.compact>li{padding:.5rem .7rem}
     .subcard{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:1rem;margin:.75rem 0}
     button,.btn{font:inherit;font-weight:600;cursor:pointer;border:0;border-radius:999px;
-      padding:.62rem 1.2rem;background:linear-gradient(135deg,var(--gold),#1b9fd8);color:#04121d;transition:.15s;
-      display:inline-flex;align-items:center;gap:.4rem;box-shadow:0 6px 18px rgba(43,196,230,.2)}
+      padding:.62rem 1.2rem;background:linear-gradient(135deg,var(--gold),#14566a);color:#ffffff;transition:.15s;
+      display:inline-flex;align-items:center;gap:.4rem;box-shadow:0 6px 18px rgba(23,109,131,.15)}
     button:hover:not(:disabled){filter:brightness(1.08)}
     button:disabled{opacity:.5;cursor:not-allowed}
-    button.ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--line-2)}
-    button.ghost:hover:not(:disabled){background:rgba(255,255,255,.12)}
+    button.ghost{background:#ffffff;color:var(--text);border:1px solid var(--line-2)}
+    button.ghost:hover:not(:disabled){background:#edf3f3}
     .row-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin:.7rem 0}
     label{display:block;margin:.6rem 0;color:var(--muted);font-size:.9rem}
     input,textarea{display:block;width:100%;box-sizing:border-box;margin-top:.3rem;
-      background:#26406a;color:var(--text);border:1px solid var(--line-2);border-radius:12px;
+      background:#ffffff;color:var(--text);border:1px solid var(--line-2);border-radius:12px;
       padding:.62rem .78rem;font:inherit;transition:border-color .15s,box-shadow .15s}
-    input::placeholder{color:#8ea3bf}
+    input::placeholder{color:#62767d}
     input[type=checkbox]{width:auto;display:inline-block;margin:0 .45rem 0 0;vertical-align:middle;accent-color:var(--gold)}
     label.check{display:flex;align-items:center;color:var(--text);font-size:.92rem;margin:.8rem 0}
     input:focus,textarea:focus{outline:0;border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
@@ -503,14 +503,14 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
     fieldset{border:1px dashed var(--line-2);border-radius:12px;padding:.4rem .85rem .7rem;margin:.65rem 0}
     form{margin:.5rem 0}
     .search{display:flex;gap:.5rem;align-items:center}
-    .search input{flex:1;margin-top:0;background-color:#26406a;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2393a7c2' stroke-width='2' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
+    .search input{flex:1;margin-top:0;background-color:#ffffff;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2362767d' stroke-width='2' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
       background-repeat:no-repeat;background-position:.75rem center;padding-left:2.2rem}
     .search button{flex:none}
     .badge{display:inline-block;padding:.22rem .66rem;border-radius:999px;font-size:.76rem;font-weight:600}
     .badge.ok{background:var(--green-soft);color:var(--green-2)}
-    .badge.warn{background:rgba(217,164,65,.16);color:var(--amber)}
-    .badge.off{background:rgba(224,119,107,.16);color:var(--danger)}
+    .badge.warn{background:#f7ecd7;color:var(--amber)}
+    .badge.off{background:#f9e8e6;color:var(--danger)}
     ol.rank{list-style:none;counter-reset:r;padding:0;margin:.6rem 0;display:grid;gap:.5rem}
     ol.rank>li{counter-increment:r;display:flex;align-items:center;gap:.85rem;
       background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:.65rem .85rem}
@@ -521,14 +521,14 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
     ul.dir{list-style:none;padding:0;margin:.6rem 0;display:grid;gap:.4rem}
     ul.dir>li{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:.5rem .8rem;font-size:.95rem}
     li.empty{background:transparent;border:0;color:var(--muted);padding:.4rem 0}
-    .bar{height:7px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin:.55rem 0 .15rem}
-    .bar>span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#1b9fd8,var(--gold));transition:width .5s ease}
+    .bar{height:7px;border-radius:999px;background:#dfe8e8;overflow:hidden;margin:.55rem 0 .15rem}
+    .bar>span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#287e79,var(--gold));transition:width .5s ease}
     .selos{display:inline-flex;gap:.35rem;flex-wrap:wrap;margin-top:.35rem}
     .selo{font-size:.7rem;font-weight:600;padding:.14rem .55rem;border-radius:999px;background:var(--green-soft);color:var(--green-2)}
     .rank-name .selos{display:flex;margin-top:.3rem}
     .ranking-head{margin-top:1.5rem}
     .ranking-head h3{margin:0}
-    .sel{font:inherit;font-size:.85rem;color:var(--text);background:#26406a;border:1px solid var(--line-2);
+    .sel{font:inherit;font-size:.85rem;color:var(--text);background:#ffffff;border:1px solid var(--line-2);
       border-radius:999px;padding:.35rem .8rem;cursor:pointer}
     .sel:focus-visible{outline:2px solid var(--green);outline-offset:2px}
     .link{color:var(--green-2);text-decoration:none;font-weight:600;font-size:.9rem}
@@ -541,12 +541,12 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
     .filtros{display:flex;gap:.4rem;flex-wrap:wrap;margin:.4rem 0 .6rem}
     .filtros button{padding:.4rem .9rem;font-size:.85rem;box-shadow:none}
     button.mini{padding:.3rem .75rem;font-size:.8rem;box-shadow:none}
-    button.perigo{color:var(--danger);border-color:rgba(230,139,130,.45)}
-    button.perigo:hover:not(:disabled){background:rgba(230,139,130,.12)}
-    .filtros button.ativo{background:var(--green-soft);color:var(--green-2);border-color:rgba(125,211,252,.45)}
+    button.perigo{color:var(--danger);border-color:#d7a19b}
+    button.perigo:hover:not(:disabled){background:#fae9e7}
+    .filtros button.ativo{background:var(--green-soft);color:var(--green-2);border-color:#93b8b6}
     .skel{position:relative;overflow:hidden;background:var(--surface-2);border:1px solid var(--line);border-radius:12px}
     .skel::after{content:'';position:absolute;inset:0;transform:translateX(-100%);
-      background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);animation:shimmer 1.3s infinite}
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);animation:shimmer 1.3s infinite}
     @keyframes shimmer{100%{transform:translateX(100%)}}
     .sk-banner{height:300px;border-radius:22px;margin-top:.4rem}
     .sk-stat{height:88px}
@@ -554,7 +554,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
     .sk-line-lg{height:30px;width:55%}
     .sk-row{height:46px;margin:.5rem 0}
     .codebox{font-family:ui-monospace,'Cascadia Code',monospace;word-break:break-all;
-      background:#1f3456;border:1px dashed var(--gold);border-radius:12px;padding:.7rem .85rem;color:var(--gold-2)}
+      background:#eaf1f2;border:1px dashed var(--gold);border-radius:12px;padding:.7rem .85rem;color:var(--gold-2)}
     details.accordion{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);margin:1.1rem 0;overflow:hidden}
     details.accordion>summary{cursor:pointer;padding:1rem 1.25rem;font-weight:600;list-style:none;display:flex;align-items:center}
     details.accordion>summary::-webkit-details-marker{display:none}
