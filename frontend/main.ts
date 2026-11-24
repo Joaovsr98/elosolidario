@@ -27,12 +27,12 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
       <header class="topbar">
         <div class="inner">
           <span class="mark">E</span>
-          <span class="brand">Elo Brasil Solidário<small>Rede de solidariedade</small></span>
+          <span class="brand">Elo Brasil Solidário</span>
           <nav class="nav" aria-label="Navegação principal">
-            <a href="#explorar">Explorar</a>
+            <a href="#explorar">Instituições</a>
             <a href="#empresas">Empresas</a>
-            <a href="#cadastrar">Cadastrar</a>
-            <a href="#painel">Painel</a>
+            <a href="#cadastrar">Cadastrar instituição</a>
+            <a href="#painel">Área da instituição</a>
           </nav>
         </div>
       </header>
@@ -44,57 +44,23 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
           </p>
         }
         @if (catalogo(); as dados) {
-          <section class="hero">
+          <section class="hero institution-head">
             <div class="banner">
-              <svg class="banner-art" viewBox="0 0 800 360" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-                <defs>
-                  <radialGradient id="bg" cx="28%" cy="26%" r="90%">
-                    <stop offset="0%" stop-color="#e9f1f2"/><stop offset="100%" stop-color="#c7dce1"/>
-                  </radialGradient>
-                  <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
-                    <feGaussianBlur stdDeviation="5" result="b"/>
-                    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-                  </filter>
-                </defs>
-                <rect width="800" height="360" fill="url(#bg)"/>
-                <g stroke="#6e9ca8" stroke-opacity="0.22" stroke-width="1.2">
-                  <line x1="120" y1="90" x2="210" y2="160"/><line x1="210" y1="160" x2="90" y2="240"/>
-                  <line x1="210" y1="160" x2="340" y2="180"/><line x1="260" y1="70" x2="340" y2="180"/>
-                  <line x1="340" y1="180" x2="430" y2="110"/><line x1="340" y1="180" x2="300" y2="280"/>
-                  <line x1="430" y1="110" x2="470" y2="240"/><line x1="470" y1="240" x2="560" y2="160"/>
-                  <line x1="560" y1="160" x2="640" y2="90"/><line x1="560" y1="160" x2="700" y2="210"/>
-                  <line x1="700" y1="210" x2="660" y2="310"/><line x1="470" y1="240" x2="540" y2="300"/>
-                  <line x1="640" y1="90" x2="730" y2="120"/><line x1="90" y1="240" x2="200" y2="320"/>
-                  <line x1="300" y1="280" x2="380" y2="320"/><line x1="430" y1="110" x2="640" y2="90"/>
-                </g>
-                <g fill="#739ca5" fill-opacity="0.9">
-                  <circle cx="120" cy="90" r="4"/><circle cx="210" cy="160" r="4"/><circle cx="260" cy="70" r="3"/>
-                  <circle cx="300" cy="280" r="4"/><circle cx="430" cy="110" r="4"/><circle cx="560" cy="160" r="4"/>
-                  <circle cx="540" cy="300" r="3"/><circle cx="700" cy="210" r="5"/><circle cx="660" cy="310" r="4"/>
-                  <circle cx="730" cy="120" r="3"/><circle cx="200" cy="320" r="4"/><circle cx="380" cy="320" r="3"/>
-                </g>
-                <g fill="#54818c" filter="url(#glow)">
-                  <circle cx="90" cy="240" r="6"/><circle cx="340" cy="180" r="7"/>
-                  <circle cx="470" cy="240" r="6"/><circle cx="640" cy="90" r="6"/>
-                </g>
-              </svg>
               <div class="banner-text">
-                <p class="eyebrow">Instituição · Brasil</p>
                 <h1>{{ dados.instituicao }}</h1>
-                <p class="lede">Conheça as campanhas abertas e registre sua intenção de doar. A entrega é combinada diretamente com a instituição.</p>
+                <p class="lede">Veja o que a instituição precisa e escolha o que você pode doar.</p>
+                <a class="btn" href="#campanhas-abertas">Ver campanhas</a>
               </div>
             </div>
-            <div class="stats">
-              <div class="stat"><span class="num">{{ dados.campanhas.length }}</span><span class="lbl">Campanhas abertas</span></div>
-              <div class="stat"><span class="num">{{ itensAbertos() }}</span><span class="lbl">Itens buscados</span></div>
-              <div class="stat"><span class="num">{{ empresas().length }}</span><span class="lbl">Empresas doadoras</span></div>
-            </div>
+            <dl class="institution-stats">
+              <div><dt>Campanhas abertas</dt><dd>{{ dados.campanhas.length }}</dd></div>
+              <div><dt>Tipos de itens solicitados</dt><dd>{{ itensAbertos() }}</dd></div>
+              <div><dt>Empresas doadoras</dt><dd>{{ empresas().length }}</dd></div>
+            </dl>
           </section>
-          <div class="como">
-            <div class="passo"><span class="pn">1</span><div><strong>Escolha um item</strong><p class="meta">Veja as campanhas abertas e o que a instituição precisa.</p></div></div>
-            <div class="passo"><span class="pn">2</span><div><strong>Registre a intenção</strong><p class="meta">Informe nome, contato e quantidade — sem login.</p></div></div>
-            <div class="passo"><span class="pn">3</span><div><strong>Combine a entrega</strong><p class="meta">A instituição entra em contato e confirma o recebimento.</p></div></div>
-          </div>
+          <div class="catalog-layout">
+            <section id="campanhas-abertas" class="campaign-list" aria-labelledby="campaign-heading">
+              <h2 id="campaign-heading" class="section-heading">Campanhas abertas</h2>
           @for (campanha of dados.campanhas; track campanha.id) {
             <article class="card">
               <h2>{{ campanha.titulo }}</h2>
@@ -107,19 +73,29 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
                     <form #form (submit)="$event.preventDefault(); doar(item.id, form)">
                       <label>Nome <input name="nome" required maxlength="160"></label>
                       <label>Contato <input name="contato" required maxlength="255"></label>
-                      <label>Empresa (se você representa uma) <input name="empresa" maxlength="160"></label>
-                      <p class="meta nota">Se informar uma empresa, o nome dela poderá aparecer no ranking e no mural — sem valores nem quantidades.</p>
+                      <label>Empresa (opcional) <input name="empresa" maxlength="160"></label>
+                      <p class="meta nota">O nome da empresa poderá aparecer na lista pública de doadores. Valores e quantidades não serão exibidos.</p>
                       <label>Quantidade <input name="quantidade" type="number" min="1" max="1000000" required></label>
                       <label class="check"><input type="checkbox" name="consentimento" required> Concordo com o uso do meu nome e contato para intermediar esta doação (LGPD). <a class="link" href="#privacidade" (click)="abrirPrivacidade()">Ver política</a></label>
-                      <button [disabled]="ocupado()">Registrar intenção</button>
+                      <button [disabled]="ocupado()">Enviar pedido de doação</button>
                     </form>
                   </details>
                 </li>
               }</ul>
             </article>
-          } @empty { <p class="muted">Nenhuma campanha aberta.</p> }
+          } @empty { <p class="muted">Não há campanhas abertas no momento.</p> }
+            </section>
+            <aside class="donation-guide" aria-labelledby="guide-heading">
+              <h2 id="guide-heading">Como doar</h2>
+              <ol>
+                <li>Escolha um item da campanha.</li>
+                <li>Informe a quantidade e seus dados de contato. Não é preciso criar uma conta.</li>
+                <li>A instituição entra em contato para combinar a entrega e confirmar o recebimento.</li>
+              </ol>
+            </aside>
+          </div>
           <section class="card" id="painel">
-            <p class="eyebrow">Área da instituição</p>
+            
             <h2>Painel da instituição</h2>
             @if (doacoes(); as lista) {
               <div class="row-actions"><button class="ghost" [disabled]="ocupado()" (click)="sair()">Sair</button></div>
@@ -194,7 +170,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
                     <button [disabled]="ocupado()" (click)="receber(doacao.id)">Confirmar recebimento</button>
                   }
                 </div>
-              } @empty { <p class="muted">Nenhuma intenção nesta visão.</p> }
+              } @empty { <p class="muted">Não há doações neste filtro.</p> }
               <h3>Responsáveis</h3>
               <ul class="dir">@for (r of responsaveisPainel(); track r.id) {
                 <li class="need-row"><span>{{ r.nome }} <span class="meta">· {{ r.contato }}</span></span>
@@ -232,7 +208,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
           </article>
         } @else {
           <section class="hero">
-            <p class="eyebrow">Elo Brasil Solidário</p>
+            <h1>Elo Brasil Solidário</h1>
             <p class="lede" role="status">{{ mensagem() }}</p>
           </section>
         }
@@ -255,8 +231,8 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
                 </span><span class="meta">{{ empresa.pontos }} confirmada(s)</span></li>
             } @empty { <li class="empty">Ainda sem doações confirmadas neste trimestre.</li> }</ol>
           }
-          <h3>Mural de Empresas Solidárias</h3>
-          <p class="meta">Todas as empresas que já doaram, com seus selos de reconhecimento. Busque pelo nome:</p>
+          <h3>Empresas que já doaram</h3>
+          <p class="meta">Pesquise pelo nome da empresa.</p>
           <form #busca class="search" (submit)="$event.preventDefault(); buscarEmpresas(busca)">
             <input name="q" maxlength="160" placeholder="Buscar empresa" aria-label="Buscar empresa">
             <button class="ghost">Buscar</button>
@@ -273,7 +249,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
         </section>
         <section class="card" id="explorar">
           <h2>Explorar instituições</h2>
-          <p class="meta">Conheça outras instituições da rede e suas campanhas abertas.</p>
+          <p class="meta">Encontre instituições que estão recebendo doações.</p>
           <form #exp class="search" (submit)="$event.preventDefault(); explorar(exp)">
             <input name="q" maxlength="160" placeholder="Buscar instituição ou campanha" aria-label="Buscar instituição ou campanha">
             <button class="ghost">Buscar</button>
@@ -290,7 +266,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
                   <li>{{ c.titulo }} <span class="meta">· {{ c.itens }} item(ns)</span></li>
                 }</ul>
               </div>
-            } @empty { <p class="muted">Nenhuma instituição com campanha aberta encontrada.</p> }
+            } @empty { <p class="muted">Não encontramos instituições com campanhas abertas.</p> }
           }
         </section>
         <details class="accordion" id="cadastrar"><summary>Cadastrar minha instituição</summary>
@@ -399,20 +375,16 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
       --text:#20363f;--muted:#52656c;
       --gold:#176d83;--gold-2:#14566a;
       --green:#287e79;--green-2:#235f63;--green-soft:#e0eeec;
-      --amber:#865b16;--danger:#9e3936;--radius:18px;
+      --amber:#865b16;--danger:#9e3936;--radius:6px;
       display:block;color:var(--text);line-height:1.55;
       font-family:'DM Sans',system-ui,sans-serif;
     }
     @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
     .page{min-height:100vh;display:flex;flex-direction:column;
-      background:
-        radial-gradient(1100px 560px at 50% -14%, rgba(139,179,189,.14), transparent 62%),
-        radial-gradient(780px 480px at 90% 4%, rgba(223,206,175,.18), transparent 55%),
-        radial-gradient(900px 600px at 0% 100%, rgba(139,179,189,.09), transparent 60%),
-        var(--bg);}
+      background:var(--bg);}
     .topbar{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.94);
       backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-    .topbar .inner{max-width:880px;margin:0 auto;padding:.8rem 1.25rem;display:flex;align-items:center;gap:.7rem}
+    .topbar .inner{max-width:1440px;margin:0 auto;padding:.8rem 1.25rem;display:flex;align-items:center;gap:.7rem}
     .mark{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;flex:none;
       border:1px solid var(--gold);color:var(--gold);background:#eaf1f2;
       font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.15rem}
@@ -428,7 +400,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
       .nav{margin-left:0;width:100%;gap:1.2rem;font-size:.9rem}
       .brand small{display:none}
     }
-    main{width:100%;max-width:880px;margin:0 auto;padding:1rem 1.25rem 3.5rem;box-sizing:border-box;flex:1}
+    main{width:100%;max-width:1440px;margin:0 auto;padding:1rem 1.25rem 3.5rem;box-sizing:border-box;flex:1}
     .toast{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);z-index:30;
       width:min(560px,calc(100% - 2rem));box-sizing:border-box;margin:0;padding:.8rem 1rem;
       display:flex;align-items:flex-start;gap:.75rem;border-radius:14px;font-weight:500;
@@ -568,7 +540,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
     details:not(.accordion)>summary::before{content:'→ ';color:var(--green-2)}
     details:not(.accordion)[open]>summary::before{content:'↓ '}
     footer{border-top:1px solid var(--line);color:var(--muted);font-size:.86rem;padding:1.8rem 1.25rem;margin-top:1rem}
-    .foot-inner{max-width:880px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+    .foot-inner{max-width:1440px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
     .foot-nav{display:flex;gap:1.1rem;flex-wrap:wrap}
     .foot-nav a{color:var(--muted);text-decoration:none}
     .foot-nav a:hover{color:var(--green-2)}
@@ -576,6 +548,59 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
     a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,textarea:focus-visible{
       outline:2px solid var(--green);outline-offset:2px}
     @media (prefers-reduced-motion:reduce){ .card,.hero,.banner,.stat,.passo{animation:none} .card:hover{transform:none} .skel::after{animation:none} }
+
+    /* Layout editorial: campanhas primeiro, apoio lateral e superfícies discretas. */
+    .topbar{background:var(--surface);backdrop-filter:none}
+    .topbar .inner,main,.foot-inner{padding-inline:clamp(1rem,4vw,4rem);box-sizing:border-box}
+    .topbar .inner{min-height:68px}
+    .mark{border-radius:4px;background:transparent}
+    .brand{letter-spacing:0}
+    main{padding-top:1.5rem}
+    .institution-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,30%);gap:clamp(1.5rem,4vw,4rem);align-items:start;padding:2.5rem 0;border-bottom:1px solid var(--line-2)}
+    .banner{display:block;min-height:0;border:0;border-radius:0;box-shadow:none;overflow:visible}
+    .banner-text{padding:0;background:none}
+    .banner-text h1{font-size:clamp(2rem,4vw,3.2rem);line-height:1.12;overflow-wrap:anywhere;max-width:22ch;margin:0 0 .8rem}
+    .banner-text .lede{max-width:50ch}
+    .banner-text .btn{margin-top:1.3rem;text-decoration:none}
+    .institution-stats{margin:0;padding:0 0 0 1.5rem;border-left:1px solid var(--line-2)}
+    .institution-stats div{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;padding:.65rem 0;border-bottom:1px solid var(--line)}
+    .institution-stats div:last-child{border-bottom:0}
+    .institution-stats dt{font-size:.95rem;color:var(--muted)}
+    .institution-stats dd{font-size:1.45rem;font-weight:600;margin:0;color:var(--green-2);font-variant-numeric:tabular-nums}
+    .catalog-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,30%);gap:clamp(1.5rem,4vw,4rem);align-items:start;padding:2rem 0 1.5rem}
+    .campaign-list{min-width:0}
+    .section-heading{font-size:1.75rem;margin:0 0 1rem}
+    .donation-guide{border-top:3px solid var(--green-2);padding:1rem 0 0}
+    .donation-guide h2{font-size:1.35rem}
+    .donation-guide ol{padding-left:1.3rem;color:var(--muted);margin:.8rem 0;line-height:1.6}
+    .donation-guide li{padding-left:.25rem;margin:.65rem 0}
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:6px;box-shadow:none;padding:clamp(1rem,2vw,1.75rem);animation:none;transition:none}
+    .card:hover{transform:none;border-color:var(--line);box-shadow:none}
+    .campaign-list .card{margin:0 0 1rem}
+    .subcard,ul.needs>li,ul.dir>li,ol.rank>li{border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;padding:.8rem 0}
+    .stat{background:transparent;border:0;border-left:2px solid var(--line-2);border-radius:0;animation:none}
+    .stat .lbl,h3,.eyebrow{letter-spacing:0;text-transform:none}
+    h3{font-size:1rem}
+    button,.btn{background:var(--gold-2);border-radius:5px;box-shadow:none}
+    input,textarea,.sel,fieldset{border-radius:5px}
+    .bar,.bar>span{border-radius:2px}
+    .bar>span{background:var(--green)}
+    .banner,.passo,.stat{animation:none}
+    .toast{box-shadow:none;border-radius:6px}
+    .sk-banner{height:180px;border-radius:6px}
+    .skel::after{animation:none}
+    .search input{min-width:0}
+    @media(max-width:760px){
+      .institution-head,.catalog-layout{grid-template-columns:1fr;gap:1.5rem}
+      .institution-head{padding:1.25rem 0}
+      .institution-stats{border-left:0;padding:0}
+      .catalog-layout{padding:1.5rem 0}
+      .donation-guide{margin-top:.5rem}
+      .topbar .inner{flex-wrap:wrap;gap:.5rem}
+      .nav{margin-left:0;width:100%;flex-wrap:wrap;gap:.5rem 1rem}
+      .stats{grid-template-columns:repeat(auto-fit,minmax(105px,1fr))}
+      label.check{display:block}
+    }
   `]
 })
 class App {
@@ -641,7 +666,7 @@ class App {
       consentimento: dados.get('consentimento') != null
     }, async () => {
       form.reset();
-      this.retorno.set('Intenção registrada. A instituição poderá entrar em contato.');
+      this.retorno.set('Pedido de doação enviado. Aguarde o contato da instituição.');
     });
   }
 
