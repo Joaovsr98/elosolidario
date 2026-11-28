@@ -26,7 +26,7 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
       <a class="pular" href="#conteudo">Pular para o conteúdo</a>
       <header class="topbar">
         <div class="inner">
-          <span class="mark">E</span>
+          <span class="mark vn-elo-mark">E</span>
           <span class="brand">Elo Brasil Solidário</span>
           <nav class="nav" aria-label="Navegação principal">
             <a href="#explorar">Instituições</a>
@@ -356,6 +356,8 @@ interface InstPublica { id: number; nome: string; hostname: string; campanhas: C
     </div>
   `,
   styles: [`
+.vn-elo-mark{position:relative;isolation:isolate}.vn-elo-mark::before,.vn-elo-mark::after{content:'';position:absolute;inset:-5px;border:1px solid #176d83;border-radius:13px;pointer-events:none;animation:vn-elo-connect 3s ease-in-out infinite}.vn-elo-mark::after{animation-delay:-1.5s}@keyframes vn-elo-connect{0%{transform:scale(.95);opacity:.8}100%{transform:scale(1.45);opacity:0}}@media(prefers-reduced-motion:reduce){.vn-elo-mark::before,.vn-elo-mark::after{animation:none}}
+
     :host{
       --bg:#f7f5f0;--surface:#ffffff;--surface-2:#f2f5f5;
       --line:#dce4e5;--line-2:#9aafb5;
